@@ -2,7 +2,7 @@
 
 Projeto em preparação para ingestão de cotações B3 e séries do Banco Central, processamento Spark e tabelas Apache Iceberg consultáveis no Athena.
 
-**Estado atual: bootstrap implantado em us-east-1 e estado remoto validado. Budgets e workflows implementados localmente, mas ainda não ativados. Nenhum dado carregado; custo real ainda não apurado.**
+**Estado atual: bootstrap implantado em us-east-1 e estado remoto validado. Budgets implantados e verificados; workflows locais ainda não ativados no GitHub. Nenhum dado carregado; custo real ainda não apurado.**
 
 ## Arquitetura planejada
 
@@ -14,7 +14,7 @@ Projeto em preparação para ingestão de cotações B3 e séries do Banco Centr
 - DynamoDB para controle de execução; SQS, SNS e CloudWatch para falhas e observabilidade.
 - Terraform e GitHub Actions com OIDC para infraestrutura.
 
-O bootstrap está implantado. Budgets e workflows estão implementados localmente. Os componentes de dados permanecem planejados.
+O bootstrap está implantado. Budgets implantados; workflows implementados localmente. Os componentes de dados permanecem planejados.
 
 ## Preparação local
 
@@ -42,7 +42,7 @@ Leia [o estado da Fase 0](docs/phase-0.md) antes de prosseguir.
 ## Fases
 
 0. Acesso temporário via IAM — validado.
-1. Fundação e CI/CD — bootstrap implantado; budgets e GitHub pendentes.
+1. Fundação e CI/CD — bootstrap e budgets implantados; configuração do GitHub pendente.
 2. Ingestão bronze — pendente.
 3. Silver e backfill — pendente.
 4. Gold com dbt — pendente.
