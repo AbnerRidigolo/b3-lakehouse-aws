@@ -19,3 +19,7 @@ Recebimento efetivo de e-mail não foi comprovado: nenhum limite foi deliberadam
 ## GitHub
 
 Repositório remoto inicialmente vazio. Os quatro commits autorizados foram publicados na branch fase-1-fundacao, que passou a ser a branch padrão. Em 30/09/2026, a main e os environments ainda não existiam. Antes de habilitar DEPLOY_ENABLED, configurar e verificar os environments aws-plan e aws-apply, revisão obrigatória e restrição de apply à main. Não fazer primeiro push diretamente na main para contornar a revisão; publicar a branch autorizada, e o proprietário define o fluxo inicial de PR/merge conforme o estado do repositório.
+
+## Atualização em 01/10/2026
+
+Tag Project ativada e confirmada como Active. Budget da conta informou USD 0,047; budget filtrado informou USD 0,00 com cálculo anterior à ativação. Consulte foundation-validation.md para horários e limitações.
