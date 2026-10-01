@@ -22,3 +22,7 @@ Cadastrar TF_PLAN_ENCRYPTION_KEY como secret do repositório (32 bytes aleatóri
 Documentação: https://pynacl.readthedocs.io/en/latest/secret/ e https://docs.github.com/en/actions/reference/security/oidc .
 
 Pendências: publicação e revisão da correção, criação do secret e validação integrada de plan/apply. DEPLOY_ENABLED permanece false. OIDC validado não comprova acesso ao backend nem execução Terraform. Tag de alocação e custo real também precisam ser verificados antes de encerrar a fase 1.
+
+## Atualização em 01/10/2026
+
+Correção publicada e mesclada no PR #3; secret de criptografia cadastrado. DEPLOY_ENABLED agora true, conforme autorização. Plan manual e publicação de artifact criptografado passaram; apply foi ignorado pela condição de execução manual plan. Consulte foundation-validation.md para a próxima validação e custo observado.
