@@ -2,7 +2,7 @@
 
 Projeto em preparação para ingestão de cotações B3 e séries do Banco Central, processamento Spark e tabelas Apache Iceberg consultáveis no Athena.
 
-**Estado atual: bootstrap implantado em us-east-1 e estado remoto validado. Budgets implantados e verificados; workflows locais ainda não ativados no GitHub. Nenhum dado carregado; custo real ainda não apurado.**
+**Estado atual: bootstrap implantado em us-east-1 e estado remoto validado. Budgets implantados e verificados; CI offline e OIDC dos papéis plan/apply validados; execução integrada Terraform pendente. Nenhum dado carregado; custo real ainda não apurado.**
 
 ## Arquitetura planejada
 
@@ -14,7 +14,7 @@ Projeto em preparação para ingestão de cotações B3 e séries do Banco Centr
 - DynamoDB para controle de execução; SQS, SNS e CloudWatch para falhas e observabilidade.
 - Terraform e GitHub Actions com OIDC para infraestrutura.
 
-O bootstrap está implantado. Budgets implantados; workflows implementados localmente. Os componentes de dados permanecem planejados.
+O bootstrap está implantado. Budgets implantados; workflows publicados na branch fase-1-fundacao. Os componentes de dados permanecem planejados.
 
 ## Preparação local
 
@@ -30,7 +30,7 @@ Leia [o estado da Fase 0](docs/phase-0.md) antes de prosseguir.
 
 ## Regras de execução
 
-- Região proposta: `us-east-1`, sujeita à confirmação de disponibilidade e custos.
+- Região da fundação: `us-east-1`. Disponibilidade e custos dos serviços das próximas fases serão verificados antes da implantação.
 - Aprovação explícita antes de cada operação com custo e ao final de cada fase.
 - Push somente com autorização por commit; PR e merge realizados pelo proprietário.
 - Sem chaves estáticas AWS no código ou GitHub. Acesso local por `aws login` com credenciais temporárias e CI por OIDC. Identity Center e Organizations não serão habilitados para este projeto.
@@ -42,7 +42,7 @@ Leia [o estado da Fase 0](docs/phase-0.md) antes de prosseguir.
 ## Fases
 
 0. Acesso temporário via IAM — validado.
-1. Fundação e CI/CD — bootstrap e budgets implantados; configuração do GitHub pendente.
+1. Fundação e CI/CD — bootstrap e budgets implantados; CI e OIDC validados; proteção do plano e validação integrada pendentes.
 2. Ingestão bronze — pendente.
 3. Silver e backfill — pendente.
 4. Gold com dbt — pendente.

@@ -1,6 +1,6 @@
-# Fase 1: fundação (implementação local)
+# Fase 1: fundação (implantação parcial)
 
-Status: código em validação, ainda não implantado. Push e configuração no GitHub não realizados.
+Status: bootstrap e budgets implantados em us-east-1; estados remotos verificados. Quatro commits publicados na branch fase-1-fundacao. Environments, variáveis e secret de e-mail configurados. CI offline e identidade OIDC dos dois papéis validados; execução integrada de Terraform pendente. Veja bootstrap-evidence.md e budgets-evidence.md para as evidências de implantação.
 
 ## Escopo
 
@@ -46,11 +46,11 @@ Não habilitar `DEPLOY_ENABLED` se o plano do GitHub não oferecer a proteção 
 
 Variáveis do repositório: `AWS_ACCOUNT_ID`, `AWS_REGION`, `TF_STATE_BUCKET`, `AWS_PLAN_ROLE_ARN`, `AWS_APPLY_ROLE_ARN`, `PROJECT_START`, `PROJECT_END`, `DEPLOY_ENABLED`.
 
-Secret: `BUDGET_ALERT_EMAIL` (dado de contato, não credencial AWS).
+Secrets: `BUDGET_ALERT_EMAIL` (contato) e `TF_PLAN_ENCRYPTION_KEY` (chave Base64 de 32 bytes para proteger o artifact).
 
 PRs de forks executam apenas CI offline. PRs internos só recebem papel plan após aprovação. Não usar `pull_request_target`. O papel plan não grava o estado e o papel apply só administra os budgets da Fase 1; não pode alterar o próprio IAM nem o bootstrap. Permissões para fases futuras serão adicionadas sob revisão.
 
-O plano binário contém valores sensíveis, inclusive e-mail e potencialmente estado: guardar apenas como artifact do run por um dia, nunca como comentário público ou arquivo Git. Aprovar somente após examinar mudanças e estimativa. Reexecutar plan se o estado mudar; não forçar plano obsoleto.
+O plano binário contém valores sensíveis, inclusive e-mail e potencialmente estado: publicar somente a versão criptografada como artifact do run por um dia, nunca como comentário público ou arquivo Git. A chave fica no secret e o contexto autentica execução e commit. Aprovar somente após examinar mudanças e estimativa. Reexecutar plan se o estado mudar; não forçar plano obsoleto.
 
 ## Destroy
 
@@ -58,7 +58,9 @@ Workflow manual, somente main, confirmação exata `DESTROY b3-lakehouse-aws` e 
 
 ## Evidências ainda pendentes
 
-Plan autenticado, apply, alertas recebidos, backend remoto, autenticação GitHub OIDC e execução de workflows. Testes locais não comprovam nenhum desses itens.
+Permanecem pendentes: recebimento efetivo dos alertas, ativação da tag de alocação Project, custo real, validação integrada de plan/apply e publicação da proteção do artifact. Plan autenticado, apply e backend remoto já foram verificados e registrados nos arquivos de evidência.
+
+Main criada e definida como padrão, com PRs #1 e #2 mesclados pelo proprietário. Environments configurados e testes OIDC dos dois papéis passaram em 01/10/2026. Consulte oidc-check.md para evidências e proteção do artifact. PR e merge continuam sob responsabilidade do proprietário.
 
 ## Referências
 

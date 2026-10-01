@@ -18,4 +18,4 @@ Recebimento efetivo de e-mail não foi comprovado: nenhum limite foi deliberadam
 
 ## GitHub
 
-Repositório remoto inicialmente vazio. A publicação dos commits ainda depende da autorização do proprietário. Antes de habilitar DEPLOY_ENABLED, configurar e verificar os environments aws-plan e aws-apply, revisão obrigatória e restrição de apply à main. Não fazer primeiro push diretamente na main para contornar a revisão; publicar a branch autorizada, e o proprietário define o fluxo inicial de PR/merge conforme o estado do repositório.
+Repositório remoto inicialmente vazio. Os quatro commits autorizados foram publicados na branch fase-1-fundacao, que passou a ser a branch padrão. Em 30/09/2026, a main e os environments ainda não existiam. Antes de habilitar DEPLOY_ENABLED, configurar e verificar os environments aws-plan e aws-apply, revisão obrigatória e restrição de apply à main. Não fazer primeiro push diretamente na main para contornar a revisão; publicar a branch autorizada, e o proprietário define o fluxo inicial de PR/merge conforme o estado do repositório.

@@ -1,8 +1,8 @@
 locals {
-  project    = "b3-lakehouse-aws"
-  repository = "AbnerRidigolo/b3-lakehouse-aws"
-  state_key  = "dev/terraform.tfstate"
-  oidc_arn   = var.existing_oidc_provider_arn != null ? var.existing_oidc_provider_arn : aws_iam_openid_connect_provider.github[0].arn
+  project             = "b3-lakehouse-aws"
+  oidc_subject_prefix = "repo:AbnerRidigolo@135280329/b3-lakehouse-aws@1387924432"
+  state_key           = "dev/terraform.tfstate"
+  oidc_arn            = var.existing_oidc_provider_arn != null ? var.existing_oidc_provider_arn : aws_iam_openid_connect_provider.github[0].arn
 }
 
 resource "aws_s3_bucket" "state" {
@@ -55,7 +55,7 @@ resource "aws_iam_role" "github" {
       Principal = { Federated = local.oidc_arn }
       Condition = { StringEquals = {
         "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
-        "token.actions.githubusercontent.com:sub" = "repo:${local.repository}:environment:aws-${each.key}"
+        "token.actions.githubusercontent.com:sub" = "${local.oidc_subject_prefix}:environment:aws-${each.key}"
       } }
     }]
   })

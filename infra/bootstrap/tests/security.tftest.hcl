@@ -14,7 +14,7 @@ run "state_and_trust_boundaries" {
     error_message = "Keep state recovery and prevent automatic object deletion."
   }
   assert {
-    condition     = jsondecode(aws_iam_role.github["apply"].assume_role_policy).Statement[0].Condition.StringEquals["token.actions.githubusercontent.com:sub"] == "repo:AbnerRidigolo/b3-lakehouse-aws:environment:aws-apply"
+    condition     = jsondecode(aws_iam_role.github["apply"].assume_role_policy).Statement[0].Condition.StringEquals["token.actions.githubusercontent.com:sub"] == "repo:AbnerRidigolo@135280329/b3-lakehouse-aws@1387924432:environment:aws-apply"
     error_message = "Apply must trust only the approved repository environment."
   }
   assert {

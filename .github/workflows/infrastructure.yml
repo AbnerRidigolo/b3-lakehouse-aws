@@ -46,6 +46,11 @@ jobs:
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: '1.16.2'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install plan encryption dependency
+        run: python -m pip install -r scripts/requirements-ci.txt
       - name: Offline checks before AWS authentication
         run: |
           set -euo pipefail
@@ -60,8 +65,11 @@ jobs:
         with:
           role-to-assume: ${{ vars.AWS_PLAN_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION }}
-          allowed-account-ids: ${{ vars.AWS_ACCOUNT_ID }}
           role-duration-seconds: 900
+      - name: Confirm AWS account
+        env:
+          EXPECTED_ACCOUNT: ${{ vars.AWS_ACCOUNT_ID }}
+        run: test "$(aws sts get-caller-identity --query Account --output text)" = "$EXPECTED_ACCOUNT"
       - name: Initialize and validate
         env:
           STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
@@ -79,10 +87,16 @@ jobs:
           if [[ "$OPERATION" == "destroy" ]]; then flags+=(-destroy); fi
           terraform -chdir=infra/environments/dev plan -lock-timeout=120s "${flags[@]}" -out=reviewed.tfplan
           echo 'Review this run plan and cost estimate before approving aws-apply. Budget is an alert, not a hard limit.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Encrypt the reviewed plan
+        env:
+          TF_PLAN_ENCRYPTION_KEY: ${{ secrets.TF_PLAN_ENCRYPTION_KEY }}
+          PLAN_CONTEXT: ${{ github.run_id }}:${{ github.sha }}
+        run: python scripts/plan_crypto.py encrypt infra/environments/dev/reviewed.tfplan infra/environments/dev/reviewed.tfplan.enc
       - uses: actions/upload-artifact@v4
         with:
-          name: reviewed-plan
-          path: infra/environments/dev/reviewed.tfplan
+          name: reviewed-plan-encrypted
+          path: infra/environments/dev/reviewed.tfplan.enc
+          if-no-files-found: error
           retention-days: 1
   apply:
     needs: plan
@@ -103,16 +117,29 @@ jobs:
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: '1.16.2'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install plan encryption dependency
+        run: python -m pip install -r scripts/requirements-ci.txt
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ vars.AWS_APPLY_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION }}
-          allowed-account-ids: ${{ vars.AWS_ACCOUNT_ID }}
           role-duration-seconds: 900
       - uses: actions/download-artifact@v4
         with:
-          name: reviewed-plan
+          name: reviewed-plan-encrypted
           path: infra/environments/dev
+      - name: Authenticate and decrypt the exact reviewed plan
+        env:
+          TF_PLAN_ENCRYPTION_KEY: ${{ secrets.TF_PLAN_ENCRYPTION_KEY }}
+          PLAN_CONTEXT: ${{ github.run_id }}:${{ github.sha }}
+        run: python scripts/plan_crypto.py decrypt infra/environments/dev/reviewed.tfplan.enc infra/environments/dev/reviewed.tfplan
+      - name: Confirm AWS account
+        env:
+          EXPECTED_ACCOUNT: ${{ vars.AWS_ACCOUNT_ID }}
+        run: test "$(aws sts get-caller-identity --query Account --output text)" = "$EXPECTED_ACCOUNT"
       - name: Apply the exact reviewed plan
         env:
           STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
