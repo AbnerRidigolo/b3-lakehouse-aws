@@ -22,7 +22,6 @@ jobs:
         with:
           role-to-assume: ${{ inputs.role == 'apply' && vars.AWS_APPLY_ROLE_ARN || vars.AWS_PLAN_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION }}
-          allowed-account-ids: ${{ vars.AWS_ACCOUNT_ID }}
           role-duration-seconds: 900
           role-session-name: oidc-verification
       - name: Verify account and assumed role
