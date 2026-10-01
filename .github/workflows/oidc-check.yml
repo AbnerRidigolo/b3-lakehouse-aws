@@ -1,0 +1,47 @@
+name: Verify AWS OIDC
+on:
+  workflow_dispatch:
+    inputs:
+      role:
+        description: Role to verify (requires environment approval)
+        type: choice
+        options: [plan, apply]
+        default: plan
+permissions:
+  contents: read
+jobs:
+  identity:
+    if: github.ref == 'refs/heads/main'
+    environment: ${{ inputs.role == 'apply' && 'aws-apply' || 'aws-plan' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      id-token: write
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ inputs.role == 'apply' && vars.AWS_APPLY_ROLE_ARN || vars.AWS_PLAN_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          allowed-account-ids: ${{ vars.AWS_ACCOUNT_ID }}
+          role-duration-seconds: 900
+          role-session-name: oidc-verification
+      - name: Verify account and assumed role
+        env:
+          EXPECTED_ACCOUNT: ${{ vars.AWS_ACCOUNT_ID }}
+          EXPECTED_ROLE_ARN: ${{ inputs.role == 'apply' && vars.AWS_APPLY_ROLE_ARN || vars.AWS_PLAN_ROLE_ARN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          aws sts get-caller-identity --output json > "$RUNNER_TEMP/identity.json"
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          identity = json.loads((Path(os.environ['RUNNER_TEMP']) / 'identity.json').read_text())
+          account = os.environ['EXPECTED_ACCOUNT']
+          role = os.environ['EXPECTED_ROLE_ARN'].rsplit('/', 1)[-1]
+          expected = f'arn:aws:sts::{account}:assumed-role/{role}/oidc-verification'
+          if identity['Account'] != account or identity['Arn'] != expected:
+              raise SystemExit('Unexpected AWS account or role')
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as summary:
+              summary.write(f'OIDC verified for role `{role}`. Only STS identity was queried; no infrastructure changes.\n')
+          PY
