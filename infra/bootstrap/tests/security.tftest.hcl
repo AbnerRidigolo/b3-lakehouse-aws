@@ -3,6 +3,18 @@ variables {
   account_id        = "123456789012"
   state_bucket_name = "b3-lakehouse-aws-test-state"
 }
+run "bronze_permissions_are_bounded" {
+  command = apply
+  variables { enable_bronze_permissions = true }
+  assert {
+    condition     = !strcontains(aws_iam_policy.bronze_boundary[0].policy, "iam:") && !strcontains(aws_iam_policy.bronze_boundary[0].policy, "s3:DeleteObject")
+    error_message = "Runtime boundary must not administer IAM or delete bronze objects."
+  }
+  assert {
+    condition     = !strcontains(aws_iam_role_policy.bronze_ci["plan"].policy, "iam:PassRole") && !strcontains(aws_iam_role_policy.bronze_ci["plan"].policy, "lambda:CreateFunction")
+    error_message = "Plan must remain read-only for phase 2 resources."
+  }
+}
 run "state_and_trust_boundaries" {
   command = apply
   assert {

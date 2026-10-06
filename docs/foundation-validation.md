@@ -31,3 +31,7 @@ Publicar esta atualização mediante autorização por commit; proprietário abr
 Reservar até USD 0,01 adicional para requisições S3 dessa validação, sujeito à autorização do proprietário antes da execução. Revisar o plano antes de aprovar aws-apply. Essa execução validará download, autenticação e decifragem do artifact, aplicação do mesmo plano e permissões de acesso ao estado. Se surgirem alterações inesperadas, não aprovar apply.
 
 Encerramento da fase 1 ainda pendente dessa validação integrada. Recebimento efetivo de alertas de orçamento não foi comprovado e não será provocado por gasto deliberado. Componentes de dados permanecem pendentes.
+
+## Validação integrada concluída
+
+Execução https://github.com/AbnerRidigolo/b3-lakehouse-aws/actions/runs/36923751428 : plan informou nenhuma alteração. Download e decifragem autenticada passaram; apply concluiu com 0 criados, 0 alterados e 0 destruídos. Fundação validada. O custo observado acima mantém sua data de medição original; não é saldo atual.
