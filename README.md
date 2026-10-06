@@ -2,7 +2,7 @@
 
 Projeto em preparação para ingestão de cotações B3 e séries do Banco Central, processamento Spark e tabelas Apache Iceberg consultáveis no Athena.
 
-**Estado atual: bootstrap implantado em us-east-1 e estado remoto validado. Budgets implantados e verificados; CI offline e OIDC dos papéis plan/apply validados; plan remoto e artifact criptografado validados; apply pelo workflow pendente. Nenhum dado carregado; custo real ainda não apurado.**
+**Estado atual: bootstrap implantado em us-east-1 e estado remoto validado. Budgets implantados e verificados; CI offline e OIDC dos papéis plan/apply validados; plan/apply com artifact criptografado validados; fase 2 em implementação local. Nenhum dado carregado; custo real ainda não apurado.**
 
 ## Arquitetura planejada
 
@@ -42,8 +42,8 @@ Leia [o estado da Fase 0](docs/phase-0.md) antes de prosseguir.
 ## Fases
 
 0. Acesso temporário via IAM — validado.
-1. Fundação e CI/CD — bootstrap e budgets implantados; CI e OIDC validados; plano criptografado validado; apply pelo workflow pendente.
-2. Ingestão bronze — pendente.
+1. Fundação e CI/CD — bootstrap e budgets implantados; CI e OIDC validados; plan/apply e artifact criptografado validados.
+2. Ingestão bronze — código e testes locais validados; implantação e carga AWS pendentes.
 3. Silver e backfill — pendente.
 4. Gold com dbt — pendente.
 5. Orquestração e confiabilidade — pendente.
@@ -56,3 +56,5 @@ Leia [o estado da Fase 0](docs/phase-0.md) antes de prosseguir.
 Consulte [Fase 1](docs/phase-1.md) e [estimativa inicial](docs/costs/foundation.md). Teto total: USD 10, com reserva de USD 2; não é teto mensal. Workflows de implantação desabilitados até configuração e proteção dos environments.
 
 Consulte [as evidências de validação da fundação e consumo observado](docs/foundation-validation.md).
+
+A [fase 2](docs/phase-2.md) prepara Lambda, S3 bronze, DynamoDB e Scheduler. As flags de implantação e agendamento começam desativadas. Consulte [a estimativa da carga inicial](docs/costs/bronze.md) antes de autorizar recursos.
