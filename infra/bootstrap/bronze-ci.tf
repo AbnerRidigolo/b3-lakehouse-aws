@@ -30,7 +30,7 @@ resource "aws_iam_role_policy" "bronze_ci" {
   role     = each.value.id
   name     = "phase-2-bronze-only"
   policy = jsonencode({ Version = "2012-10-17", Statement = concat([
-    { Effect = "Allow", Action = ["s3:ListBucket", "s3:GetBucketAcl", "s3:GetBucketWebsite", "s3:GetBucketVersioning", "s3:GetAccelerateConfiguration", "s3:GetBucketRequestPayment", "s3:GetLifecycleConfiguration", "s3:GetBucketLocation", "s3:GetBucketTagging", "s3:GetBucketPolicy", "s3:GetBucketPublicAccessBlock", "s3:GetEncryptionConfiguration"], Resource = local.bronze_bucket },
+    { Effect = "Allow", Action = ["s3:ListBucket", "s3:GetBucketAcl", "s3:GetBucketCORS", "s3:GetBucketLogging", "s3:GetReplicationConfiguration", "s3:GetBucketObjectLockConfiguration", "s3:GetBucketWebsite", "s3:GetBucketVersioning", "s3:GetAccelerateConfiguration", "s3:GetBucketRequestPayment", "s3:GetLifecycleConfiguration", "s3:GetBucketLocation", "s3:GetBucketTagging", "s3:GetBucketPolicy", "s3:GetBucketPublicAccessBlock", "s3:GetEncryptionConfiguration"], Resource = local.bronze_bucket },
     { Effect = "Allow", Action = ["dynamodb:DescribeTable", "dynamodb:DescribeTimeToLive", "dynamodb:DescribeContinuousBackups", "dynamodb:ListTagsOfResource"], Resource = local.bronze_table },
     { Effect = "Allow", Action = ["lambda:GetFunction", "lambda:GetFunctionConfiguration", "lambda:ListTags", "lambda:GetFunctionCodeSigningConfig", "lambda:GetFunctionConcurrency"], Resource = local.bronze_lambda },
     { Effect = "Allow", Action = ["iam:GetRole", "iam:GetRolePolicy", "iam:ListRolePolicies", "iam:ListAttachedRolePolicies"], Resource = local.bronze_roles },
