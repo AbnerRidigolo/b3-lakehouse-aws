@@ -44,7 +44,7 @@ Leia [o estado da Fase 0](docs/phase-0.md) antes de prosseguir.
 0. Acesso temporário via IAM — validado.
 1. Fundação e CI/CD — bootstrap e budgets implantados; CI e OIDC validados; plan/apply e artifact criptografado validados.
 2. Ingestão bronze — implantada e validada com carga real e idempotência; Scheduler criado e desativado.
-3. Silver incremental — implantada e validada com carga e repetição MERGE no Glue/Iceberg. EMR e backfill ainda não implementados.
+3. Silver incremental — implantada e validada com carga e repetição MERGE no Glue/Iceberg. Piloto EMR de 2025 preparado localmente; implantação e execução pendentes. Histórico completo ainda não implementado.
 4. Gold com dbt — pendente.
 5. Orquestração e confiabilidade — pendente.
 6. Evidências, documentação e custos — pendente.
@@ -62,3 +62,5 @@ A [fase 2](docs/phase-2.md) prepara Lambda, S3 bronze, DynamoDB e Scheduler. As 
 Consulte [as evidências da primeira carga bronze real](docs/bronze-data-evidence.md).
 
 Consulte [a fase silver incremental](docs/phase-3.md), [a estimativa aprovada do piloto](docs/costs/silver.md) e [as evidências das duas execuções Glue](docs/silver-data-evidence.md). Silver habilitada no ambiente implantado, job sob demanda; defaults Terraform permanecem desativados para novos ambientes.
+
+Consulte [o piloto histórico 2025 para revisão](docs/history-2025.md) e [sua estimativa](docs/costs/history.md). Fontes anuais preparadas e validadas localmente; nenhum backfill EMR executado.

@@ -1,7 +1,28 @@
-mock_provider "aws" {}
+mock_provider "aws" {
+  mock_resource "aws_iam_policy" {
+    defaults = { arn = "arn:aws:iam::123456789012:policy/mock-reviewed-policy" }
+  }
+}
 variables {
-  account_id        = "123456789012"
-  state_bucket_name = "b3-lakehouse-aws-test-state"
+  account_id                    = "123456789012"
+  state_bucket_name             = "b3-lakehouse-aws-test-state"
+  existing_emr_service_role_arn = "arn:aws:iam::123456789012:role/aws-service-role/ops.emr-serverless.amazonaws.com/AWSServiceRoleForAmazonEMRServerless"
+}
+run "history_cannot_start_paid_compute" {
+  command = apply
+  variables { enable_history_permissions = true }
+  assert {
+    condition     = jsondecode(aws_iam_policy.history_ci["apply"].policy).Statement[2].Resource == "*" && jsondecode(aws_iam_policy.history_ci["apply"].policy).Statement[2].Condition.StringEquals["aws:RequestedRegion"] == var.region && jsondecode(aws_iam_policy.history_ci["apply"].policy).Statement[2].Condition.StringEquals["aws:RequestTag/Component"] == "history-2025"
+    error_message = "CreateApplication requires resource wildcard, bounded by region and pilot tags."
+  }
+  assert {
+    condition     = !strcontains(aws_iam_policy.history_ci["apply"].policy, "StartJobRun") && !strcontains(aws_iam_policy.history_ci["apply"].policy, "StartApplication") && !strcontains(aws_iam_policy.history_ci["plan"].policy, "CreateApplication")
+    error_message = "CI must not start paid workers or let plan create applications."
+  }
+  assert {
+    condition     = strcontains(aws_iam_policy.history_boundary[0].policy, "bronze/history/year=2025/*") && !strcontains(aws_iam_policy.history_boundary[0].policy, "iam:") && !strcontains(aws_iam_policy.history_boundary[0].policy, "CreateTable")
+    error_message = "Pilot runtime must not alter IAM, unrelated bronze years or create catalogs."
+  }
 }
 run "silver_runtime_and_ci_boundaries" {
   command = apply

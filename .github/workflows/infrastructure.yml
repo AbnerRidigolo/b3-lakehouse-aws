@@ -1,9 +1,11 @@
 name: Reviewed infrastructure
 on:
   pull_request:
+    paths-ignore: ["**/*.md", "docs/**"]
     branches: [main]
   push:
     branches: [main]
+    paths-ignore: ["**/*.md", "docs/**"]
   workflow_dispatch:
     inputs:
       operation:
@@ -21,6 +23,7 @@ concurrency:
 env:
   TF_IN_AUTOMATION: 'true'
   TF_INPUT: 'false'
+  TF_VAR_enable_history: ${{ vars.ENABLE_HISTORY == 'true' }}
   TF_VAR_enable_silver: ${{ vars.ENABLE_SILVER == 'true' }}
   TF_VAR_enable_bronze: ${{ vars.ENABLE_BRONZE == 'true' }}
   TF_VAR_bronze_schedule_enabled: ${{ vars.BRONZE_SCHEDULE_ENABLED == 'true' }}
@@ -46,10 +49,12 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - name: Build reviewed Lambda package
+      - name: Build reviewed data job packages
         run: |
           python scripts/build_bronze.py
           python scripts/build_silver.py
+          python -m pip install --only-binary=:all: --no-compile --target local/history-sdk -r scripts/requirements-history.txt
+          python scripts/build_history.py
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: '1.16.2'
@@ -63,7 +68,7 @@ jobs:
           set -euo pipefail
           python -m pytest tests -q
           terraform fmt -check -recursive infra
-          for dir in infra/bootstrap infra/modules/budget infra/modules/bronze infra/modules/silver; do
+          for dir in infra/bootstrap infra/modules/budget infra/modules/bronze infra/modules/silver infra/modules/history; do
             terraform -chdir="$dir" init -backend=false -input=false -lockfile=readonly
             terraform -chdir="$dir" validate
             terraform -chdir="$dir" test
@@ -121,10 +126,12 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - name: Build reviewed Lambda package
+      - name: Build reviewed data job packages
         run: |
           python scripts/build_bronze.py
           python scripts/build_silver.py
+          python -m pip install --only-binary=:all: --no-compile --target local/history-sdk -r scripts/requirements-history.txt
+          python scripts/build_history.py
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: '1.16.2'
