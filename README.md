@@ -2,7 +2,7 @@
 
 Projeto em preparação para ingestão de cotações B3 e séries do Banco Central, processamento Spark e tabelas Apache Iceberg consultáveis no Athena.
 
-**Estado atual: fundação validada em us-east-1; primeira carga bronze de 01/10/2026 executada e idempotência comprovada na Lambda/S3/DynamoDB. Infraestrutura bronze concluída e Scheduler criado, mantendo o agendamento desativado. Consumo da conta informado pelo budget: USD 0,335, com atraso de faturamento; medição por serviço ainda pendente.**
+**Estado atual: fundação, bronze e silver incremental implantadas em us-east-1. Data 01/10/2026 carregada em duas tabelas Iceberg v2 pelo Glue: 317 cotações e 3 taxas. Repetição MERGE validada sem duplicação. Scheduler permanece desativado. Computação estimada das duas chamadas Glue: USD 0,06417; budget da conta ainda informa USD 0,335 com atraso; custo final por serviço pendente.**
 
 ## Arquitetura planejada
 
@@ -14,7 +14,7 @@ Projeto em preparação para ingestão de cotações B3 e séries do Banco Centr
 - DynamoDB para controle de execução; SQS, SNS e CloudWatch para falhas e observabilidade.
 - Terraform e GitHub Actions com OIDC para infraestrutura.
 
-Bootstrap, budgets, workflows e ingestão bronze estão implantados. Silver, gold e orquestração ponta a ponta permanecem planejados.
+Bootstrap, budgets, workflows, ingestão bronze e silver incremental estão implantados. EMR/histórico, gold e orquestração ponta a ponta permanecem planejados.
 
 ## Preparação local
 
@@ -44,7 +44,7 @@ Leia [o estado da Fase 0](docs/phase-0.md) antes de prosseguir.
 0. Acesso temporário via IAM — validado.
 1. Fundação e CI/CD — bootstrap e budgets implantados; CI e OIDC validados; plan/apply e artifact criptografado validados.
 2. Ingestão bronze — implantada e validada com carga real e idempotência; Scheduler criado e desativado.
-3. Silver incremental — código, Terraform e testes preparados localmente; implantação e execução Glue pendentes. EMR e backfill ainda não implementados.
+3. Silver incremental — implantada e validada com carga e repetição MERGE no Glue/Iceberg. EMR e backfill ainda não implementados.
 4. Gold com dbt — pendente.
 5. Orquestração e confiabilidade — pendente.
 6. Evidências, documentação e custos — pendente.
@@ -61,4 +61,4 @@ A [fase 2](docs/phase-2.md) prepara Lambda, S3 bronze, DynamoDB e Scheduler. As 
 
 Consulte [as evidências da primeira carga bronze real](docs/bronze-data-evidence.md).
 
-Consulte [o conjunto silver incremental para revisão](docs/phase-3.md) e [a estimativa do piloto](docs/costs/silver.md). Nenhum job Glue foi executado; a flag de implantação silver começa desativada.
+Consulte [a fase silver incremental](docs/phase-3.md), [a estimativa aprovada do piloto](docs/costs/silver.md) e [as evidências das duas execuções Glue](docs/silver-data-evidence.md). Silver habilitada no ambiente implantado, job sob demanda; defaults Terraform permanecem desativados para novos ambientes.
