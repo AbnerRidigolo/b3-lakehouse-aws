@@ -2,7 +2,7 @@
 
 Projeto em preparação para ingestão de cotações B3 e séries do Banco Central, processamento Spark e tabelas Apache Iceberg consultáveis no Athena.
 
-**Estado atual: bootstrap implantado em us-east-1 e estado remoto validado. Budgets implantados e verificados; CI offline e OIDC dos papéis plan/apply validados; plan/apply com artifact criptografado validados; fase 2 em implementação local. Nenhum dado carregado; custo real ainda não apurado.**
+**Estado atual: fundação validada em us-east-1; primeira carga bronze de 01/10/2026 executada e idempotência comprovada na Lambda/S3/DynamoDB. Finalização do Scheduler desativado e correções Terraform pendentes. Consumo da conta informado pelo budget: USD 0,335, com atraso de faturamento; medição por serviço ainda pendente.**
 
 ## Arquitetura planejada
 
@@ -43,7 +43,7 @@ Leia [o estado da Fase 0](docs/phase-0.md) antes de prosseguir.
 
 0. Acesso temporário via IAM — validado.
 1. Fundação e CI/CD — bootstrap e budgets implantados; CI e OIDC validados; plan/apply e artifact criptografado validados.
-2. Ingestão bronze — código e testes locais validados; implantação e carga AWS pendentes.
+2. Ingestão bronze — código e testes locais validados; primeira carga AWS e idempotência comprovadas; finalização do Scheduler desativado pendente.
 3. Silver e backfill — pendente.
 4. Gold com dbt — pendente.
 5. Orquestração e confiabilidade — pendente.
@@ -58,3 +58,5 @@ Consulte [Fase 1](docs/phase-1.md) e [estimativa inicial](docs/costs/foundation.
 Consulte [as evidências de validação da fundação e consumo observado](docs/foundation-validation.md).
 
 A [fase 2](docs/phase-2.md) prepara Lambda, S3 bronze, DynamoDB e Scheduler. As flags de implantação e agendamento começam desativadas. Consulte [a estimativa da carga inicial](docs/costs/bronze.md) antes de autorizar recursos.
+
+Consulte [as evidências da primeira carga bronze real](docs/bronze-data-evidence.md).
