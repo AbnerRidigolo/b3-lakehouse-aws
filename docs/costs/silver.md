@@ -1,6 +1,6 @@
 # Estimativa: piloto silver de uma data
 
-Preparada em 06/10/2026; ainda não autorizada. Teto total do projeto USD 10; reservar USD 2 para limpeza e uso atrasado. Créditos Free Tier não reduzem o consumo bruto usado no planejamento.
+Preparada em 06/10/2026 e autorizada pelo proprietário antes da execução. Teto total do projeto USD 10; reservar USD 2 para limpeza e uso atrasado. Créditos Free Tier não reduzem o consumo bruto usado no planejamento.
 
 Escopo: bootstrap IAM, implantação de bucket/scripts/catalog database/logs/job, uma execução Glue incremental para 01/10/2026 e uma repetição da mesma data para validar MERGE. Sem histórico, Athena, EMR, otimização automática de Iceberg, crawler, sessão interativa ou agendamento.
 
@@ -15,3 +15,5 @@ Timeout e budget não são limites absolutos de cobrança. Custos reais dependem
 Verificação offline proposta: `python scripts/cost_gate.py --spent 0.335 --pending 0.20 --estimate 0.50`. Com reserva fixa de USD 2, saldo de planejamento USD 6,965. Essa verificação não autoriza operação e não impõe teto na AWS.
 
 Depois das chamadas, registrar JobRunId, status, duração, DPUSeconds quando disponível, consumo por tag/serviço e período da medição. Só iniciar histórico após estimativa separada e aprovação.
+
+Piloto concluído: duas chamadas SUCCEEDED, 525 DPU-segundos totais; computação estimada USD 0,06417 pela tarifa de referência. Contagens mantidas na repetição. [IDs, snapshots, verificações e leitura atrasada dos budgets](../silver-data-evidence.md). Custo final por serviço ainda não disponível; essa estimativa não substitui billing.

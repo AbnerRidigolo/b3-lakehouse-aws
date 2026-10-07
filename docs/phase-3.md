@@ -1,6 +1,6 @@
 # Fase 3: silver incremental para revisão
 
-Status: desenvolvimento local preparado em 06/10/2026. Nenhum recurso silver implantado, nenhum job Glue executado. EMR Serverless e backfill ainda não implementados. Bronze encerrada com o run [37549869974](https://github.com/AbnerRidigolo/b3-lakehouse-aws/actions/runs/37549869974).
+Status: silver incremental implantada e validada com duas execuções reais para 01/10/2026, após aprovação do piloto USD 0,50. [Evidências da carga e repetição](silver-data-evidence.md). EMR Serverless e backfill ainda não implementados. Bronze encerrada com o run [37549869974](https://github.com/AbnerRidigolo/b3-lakehouse-aws/actions/runs/37549869974).
 
 ## Escopo deste conjunto
 
@@ -34,9 +34,9 @@ Resultado local: 26 testes Python e 18 subtestes passaram; três execuções sim
 
 Conferência manual separada, também sem rede: os payloads reais previamente baixados de 01/10/2026 produziram 317 registros únicos de 15.700 cotações, sem duplicatas conflitantes; fatores 1 e 100, moeda R$. As três observações BCB passaram. Esses arquivos privados/ignorados não fazem parte dos testes unitários nem do Git.
 
-Não foi executado Spark/Iceberg localmente. Integração Glue, autorização efetiva, criação de tabelas, commits e recuperação precisam ser comprovados na AWS antes de declarar silver funcional. Athena entra na fase 4; EMR/histórico só após validar incremental e estimar cada execução.
+Não foi executado Spark/Iceberg localmente. A integração Glue, autorização efetiva, criação de tabelas, commits, conteúdo relido e repetição MERGE foram comprovados na AWS. Recuperação de falha parcial entre tabelas ainda não foi exercitada. Athena entra na fase 4; EMR/histórico só após estimativa e aprovação próprias.
 
-## Ordem de implantação, depois de aprovada
+## Procedimento do piloto (concluído até o passo 5)
 
 1. Revisar plano bootstrap com `enable_silver_permissions=true`: boundary e duas políticas CI, sem alterar bronze. Aplicar somente após autorização.
 2. Publicar commit autorizado; proprietário abre PR e faz merge após CI. Habilitar `ENABLE_SILVER=true` apenas no ciclo de implantação aprovado. Regerar plano contra o estado atual; não reutilizar planos antigos.
