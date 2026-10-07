@@ -5,8 +5,13 @@ terraform {
 variable "account_id" { type = string }
 variable "region" { type = string }
 variable "permissions_boundary_arn" { type = string }
+variable "emr_enabled" {
+  type    = bool
+  default = true
+}
 locals { name = "b3-lakehouse-aws-history-2025" }
 resource "aws_emrserverless_application" "history" {
+  count         = var.emr_enabled ? 1 : 0
   name          = local.name
   release_label = "emr-7.10.0"
   type          = "spark"
@@ -29,15 +34,17 @@ resource "aws_emrserverless_application" "history" {
   # No initial_capacity: creation never warms up billable workers.
 }
 resource "aws_iam_role" "history" {
+  count                = var.emr_enabled ? 1 : 0
   name                 = local.name
   permissions_boundary = var.permissions_boundary_arn
   assume_role_policy = jsonencode({ Version = "2012-10-17", Statement = [{
     Effect    = "Allow", Action = "sts:AssumeRole", Principal = { Service = "emr-serverless.amazonaws.com" }
-    Condition = { StringEquals = { "aws:SourceAccount" = var.account_id }, ArnEquals = { "aws:SourceArn" = aws_emrserverless_application.history.arn } }
+    Condition = { StringEquals = { "aws:SourceAccount" = var.account_id }, ArnEquals = { "aws:SourceArn" = aws_emrserverless_application.history[0].arn } }
   }] })
 }
 resource "aws_iam_role_policy" "history" {
-  role   = aws_iam_role.history.id
+  count  = var.emr_enabled ? 1 : 0
+  role   = aws_iam_role.history[0].id
   name   = "historical-silver-only"
   policy = templatefile("${path.module}/runtime-policy.json.tftpl", { account_id = var.account_id, region = var.region })
 }
@@ -49,5 +56,17 @@ resource "aws_s3_object" "artifacts" {
   source_hash            = filesha256("${path.module}/../../../artifacts/${each.value}")
   server_side_encryption = "AES256"
 }
-output "application_id" { value = aws_emrserverless_application.history.id }
-output "role_arn" { value = aws_iam_role.history.arn }
+output "application_id" { value = try(aws_emrserverless_application.history[0].id, null) }
+output "role_arn" { value = try(aws_iam_role.history[0].arn, null) }
+moved {
+  from = aws_emrserverless_application.history
+  to   = aws_emrserverless_application.history[0]
+}
+moved {
+  from = aws_iam_role.history
+  to   = aws_iam_role.history[0]
+}
+moved {
+  from = aws_iam_role_policy.history
+  to   = aws_iam_role_policy.history[0]
+}

@@ -5,6 +5,7 @@ import zipfile
 import pytest
 from src.history.prepare import prepare_b3,prepare_rates,checked_year
 from scripts.history_request import request
+from src.history.job import options
 
 
 def annual(tmp_path,year=2025,footer=3,member=None,row_year=None):
@@ -43,3 +44,10 @@ def test_incomplete_year_and_unbounded_request_rejected():
     conf=a['jobDriver']['sparkSubmit']['sparkSubmitParameters']
     assert 'spark.dynamicAllocation.enabled=false' in conf and 'spark.executor.instances=1' in conf
     with pytest.raises(ValueError):request('appid;command','123456789012','a'*64)
+
+
+def test_glue_framework_arguments_do_not_change_pinned_data_options():
+    base=['--year','2025','--bronze_bucket','bronze','--silver_bucket','silver','--runs_table','runs','--database','silver']
+    a=options(base+['--engine','glue','--JOB_NAME','historical-glue','--job-bookmark-option','job-bookmark-disable'])
+    assert a.year=='2025' and a.engine=='glue' and a.bronze_bucket=='bronze'
+    with pytest.raises(SystemExit):options(base+['--unexpected','value'])

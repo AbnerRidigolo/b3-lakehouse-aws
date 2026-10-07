@@ -23,6 +23,8 @@ concurrency:
 env:
   TF_IN_AUTOMATION: 'true'
   TF_INPUT: 'false'
+  TF_VAR_history_emr_enabled: ${{ vars.HISTORY_EMR_ENABLED != 'false' }}
+  TF_VAR_enable_history_glue: ${{ vars.ENABLE_HISTORY_GLUE == 'true' }}
   TF_VAR_enable_history: ${{ vars.ENABLE_HISTORY == 'true' }}
   TF_VAR_enable_silver: ${{ vars.ENABLE_SILVER == 'true' }}
   TF_VAR_enable_bronze: ${{ vars.ENABLE_BRONZE == 'true' }}
@@ -68,7 +70,7 @@ jobs:
           set -euo pipefail
           python -m pytest tests -q
           terraform fmt -check -recursive infra
-          for dir in infra/bootstrap infra/modules/budget infra/modules/bronze infra/modules/silver infra/modules/history; do
+          for dir in infra/bootstrap infra/modules/budget infra/modules/bronze infra/modules/silver infra/modules/history infra/modules/history-glue; do
             terraform -chdir="$dir" init -backend=false -input=false -lockfile=readonly
             terraform -chdir="$dir" validate
             terraform -chdir="$dir" test

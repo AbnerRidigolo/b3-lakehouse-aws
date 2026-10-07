@@ -1,4 +1,4 @@
-"""Single-year EMR Spark backfill. No internet downloads on billed workers."""
+"""Single-year Spark backfill for EMR or Glue; no worker internet downloads."""
 import argparse
 from datetime import datetime
 import hashlib
@@ -9,15 +9,24 @@ import time
 import uuid
 
 
+def options(argv):
+    parser = argparse.ArgumentParser()
+    for name in ['year','bronze_bucket','silver_bucket','runs_table','database']: parser.add_argument('--'+name, required=True)
+    parser.add_argument('--engine', choices=['emr','glue'], default='emr')
+    result, unknown = parser.parse_known_args(argv)
+    if unknown and result.engine != 'glue': parser.error('Unexpected EMR arguments')
+    return result
+
+
 def run():
     # spark.archives extracts the pinned pure-Python SDK into the working directory.
     sys.path.insert(0, str(Path('sdk').resolve()))
     import boto3
     from pyspark.sql import SparkSession, functions as F
     from src.silver.transform import parse_quote, safe_identifier
-    parser = argparse.ArgumentParser()
-    for name in ['year','bronze_bucket','silver_bucket','runs_table','database']: parser.add_argument('--'+name, required=True)
-    a = parser.parse_args()
+    # Glue injects framework arguments such as JOB_NAME. Data parameters remain
+    # mandatory; the Glue module pins them through non_overridable_arguments.
+    a = options(sys.argv[1:])
     if a.year != '2025': raise ValueError('Only pilot year 2025 is authorized by this version')
     year = int(a.year); database = safe_identifier(a.database)
     s3 = boto3.client('s3'); table = boto3.resource('dynamodb').Table(a.runs_table)
