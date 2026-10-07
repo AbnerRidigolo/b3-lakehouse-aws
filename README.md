@@ -2,7 +2,7 @@
 
 Projeto em preparação para ingestão de cotações B3 e séries do Banco Central, processamento Spark e tabelas Apache Iceberg consultáveis no Athena.
 
-**Estado atual: fundação validada em us-east-1; primeira carga bronze de 01/10/2026 executada e idempotência comprovada na Lambda/S3/DynamoDB. Finalização do Scheduler desativado e correções Terraform pendentes. Consumo da conta informado pelo budget: USD 0,335, com atraso de faturamento; medição por serviço ainda pendente.**
+**Estado atual: fundação validada em us-east-1; primeira carga bronze de 01/10/2026 executada e idempotência comprovada na Lambda/S3/DynamoDB. Infraestrutura bronze concluída e Scheduler criado, mantendo o agendamento desativado. Consumo da conta informado pelo budget: USD 0,335, com atraso de faturamento; medição por serviço ainda pendente.**
 
 ## Arquitetura planejada
 
@@ -14,7 +14,7 @@ Projeto em preparação para ingestão de cotações B3 e séries do Banco Centr
 - DynamoDB para controle de execução; SQS, SNS e CloudWatch para falhas e observabilidade.
 - Terraform e GitHub Actions com OIDC para infraestrutura.
 
-O bootstrap está implantado. Budgets implantados; workflows publicados na branch fase-1-fundacao. Os componentes de dados permanecem planejados.
+Bootstrap, budgets, workflows e ingestão bronze estão implantados. Silver, gold e orquestração ponta a ponta permanecem planejados.
 
 ## Preparação local
 
@@ -43,8 +43,8 @@ Leia [o estado da Fase 0](docs/phase-0.md) antes de prosseguir.
 
 0. Acesso temporário via IAM — validado.
 1. Fundação e CI/CD — bootstrap e budgets implantados; CI e OIDC validados; plan/apply e artifact criptografado validados.
-2. Ingestão bronze — código e testes locais validados; primeira carga AWS e idempotência comprovadas; finalização do Scheduler desativado pendente.
-3. Silver e backfill — pendente.
+2. Ingestão bronze — implantada e validada com carga real e idempotência; Scheduler criado e desativado.
+3. Silver incremental — código, Terraform e testes preparados localmente; implantação e execução Glue pendentes. EMR e backfill ainda não implementados.
 4. Gold com dbt — pendente.
 5. Orquestração e confiabilidade — pendente.
 6. Evidências, documentação e custos — pendente.
@@ -53,10 +53,12 @@ Leia [o estado da Fase 0](docs/phase-0.md) antes de prosseguir.
 
 ## Fundação para revisão
 
-Consulte [Fase 1](docs/phase-1.md) e [estimativa inicial](docs/costs/foundation.md). Teto total: USD 10, com reserva de USD 2; não é teto mensal. Workflows de implantação desabilitados até configuração e proteção dos environments.
+Consulte [Fase 1](docs/phase-1.md) e [estimativa inicial](docs/costs/foundation.md). Teto total: USD 10, com reserva de USD 2; não é teto mensal. Workflows habilitados, com revisão obrigatória nos environments de plan e apply.
 
 Consulte [as evidências de validação da fundação e consumo observado](docs/foundation-validation.md).
 
 A [fase 2](docs/phase-2.md) prepara Lambda, S3 bronze, DynamoDB e Scheduler. As flags de implantação e agendamento começam desativadas. Consulte [a estimativa da carga inicial](docs/costs/bronze.md) antes de autorizar recursos.
 
 Consulte [as evidências da primeira carga bronze real](docs/bronze-data-evidence.md).
+
+Consulte [o conjunto silver incremental para revisão](docs/phase-3.md) e [a estimativa do piloto](docs/costs/silver.md). Nenhum job Glue foi executado; a flag de implantação silver começa desativada.
