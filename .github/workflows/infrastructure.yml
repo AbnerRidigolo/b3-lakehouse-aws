@@ -21,6 +21,7 @@ concurrency:
 env:
   TF_IN_AUTOMATION: 'true'
   TF_INPUT: 'false'
+  TF_VAR_enable_silver: ${{ vars.ENABLE_SILVER == 'true' }}
   TF_VAR_enable_bronze: ${{ vars.ENABLE_BRONZE == 'true' }}
   TF_VAR_bronze_schedule_enabled: ${{ vars.BRONZE_SCHEDULE_ENABLED == 'true' }}
   TF_VAR_account_id: ${{ vars.AWS_ACCOUNT_ID }}
@@ -46,7 +47,9 @@ jobs:
         with:
           persist-credentials: false
       - name: Build reviewed Lambda package
-        run: python scripts/build_bronze.py
+        run: |
+          python scripts/build_bronze.py
+          python scripts/build_silver.py
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: '1.16.2'
@@ -60,7 +63,7 @@ jobs:
           set -euo pipefail
           python -m pytest tests -q
           terraform fmt -check -recursive infra
-          for dir in infra/bootstrap infra/modules/budget infra/modules/bronze; do
+          for dir in infra/bootstrap infra/modules/budget infra/modules/bronze infra/modules/silver; do
             terraform -chdir="$dir" init -backend=false -input=false -lockfile=readonly
             terraform -chdir="$dir" validate
             terraform -chdir="$dir" test
@@ -119,7 +122,9 @@ jobs:
         with:
           persist-credentials: false
       - name: Build reviewed Lambda package
-        run: python scripts/build_bronze.py
+        run: |
+          python scripts/build_bronze.py
+          python scripts/build_silver.py
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: '1.16.2'

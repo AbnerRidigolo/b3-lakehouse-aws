@@ -21,4 +21,18 @@ Lambda verificada Active, Python 3.12, 512 MB, 180 s, papel correto e sem VPC. Z
 
 O pacote local Windows diferia do runner Linux por finais de linha e metadados ZIP. Build corrigido com LF, create_system=3, timestamp e permissões fixos e ZIP_STORED (evita diferenças de compressor). Teste confirma bytes iguais entre fontes LF e CRLF.
 
-Plano local de recuperação: duas criações (política de invocação do Scheduler e schedule DISABLED), uma atualização in-place do pacote da Lambda, zero exclusões. Publicação e implantação dessas correções permanecem pendentes; a fase 2 só será encerrada após concluir os recursos e revisar evidências/custos. Não habilitar agendamento diário automaticamente.
+Plano local de recuperação: duas criações (política de invocação do Scheduler e schedule DISABLED), uma atualização in-place do pacote da Lambda, zero exclusões. Correções publicadas no PR #8 e implantadas com sucesso no run 37549869974. Não habilitar agendamento diário automaticamente.
+
+
+## Conclusão da infraestrutura bronze
+
+Em 06/10/2026, o workflow https://github.com/AbnerRidigolo/b3-lakehouse-aws/actions/runs/37549869974 concluiu plan e apply com sucesso após o merge do PR #8. Verificações posteriores por AWS CLI confirmaram:
+
+- Lambda Active, LastUpdateStatus Successful e CodeSha256 igual ao pacote portátil local.
+- Scheduler DISABLED, cron de segunda a sexta às 21h, fuso America/Sao_Paulo, alvo Lambda bronze.
+- Política invoke-bronze-only permite apenas lambda:InvokeFunction no ARN exato dessa função.
+- Os quatro objetos bronze permanecem no S3; execução bronze#2026-10-01 permanece SUCCESS no DynamoDB, conferida com leitura consistente.
+- Todos os 13 recursos do módulo bronze constam no estado remoto Terraform, além dos dois budgets.
+- Budget da conta permanece em USD 0,335, atualização 06/10/2026 20:19:32 de São Paulo; budget filtrado pelo projeto informa USD 0,00, mas ambos têm atraso. Não interpretar o valor filtrado como custo real zero nem custo final.
+
+Fase 2 tecnicamente validada. Agendamento permanece desativado. Silver, gold e orquestração ponta a ponta ainda não implementados.

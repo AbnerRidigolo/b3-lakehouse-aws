@@ -23,15 +23,17 @@ jobs:
       - run: python -m pip install -r scripts/requirements-ci.txt
       - run: python -m pytest tests -q
       - run: python scripts/build_bronze.py
+      - run: python scripts/build_silver.py
       - run: terraform fmt -check -recursive infra
       - name: Validate and mock-test without AWS access
         shell: bash
         run: |
           set -euo pipefail
-          for dir in infra/bootstrap infra/modules/budget infra/modules/bronze infra/environments/dev; do
+          for dir in infra/bootstrap infra/modules/budget infra/modules/bronze infra/modules/silver infra/environments/dev; do
             terraform -chdir="$dir" init -backend=false -input=false -lockfile=readonly
             terraform -chdir="$dir" validate
           done
           terraform -chdir=infra/bootstrap test
           terraform -chdir=infra/modules/budget test
           terraform -chdir=infra/modules/bronze test
+          terraform -chdir=infra/modules/silver test

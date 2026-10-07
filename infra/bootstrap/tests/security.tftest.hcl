@@ -3,6 +3,22 @@ variables {
   account_id        = "123456789012"
   state_bucket_name = "b3-lakehouse-aws-test-state"
 }
+run "silver_runtime_and_ci_boundaries" {
+  command = apply
+  variables { enable_silver_permissions = true }
+  assert {
+    condition     = !strcontains(aws_iam_policy.silver_boundary[0].policy, "iam:") && !strcontains(aws_iam_policy.silver_boundary[0].policy, "glue:StartJobRun")
+    error_message = "Glue runtime cannot administer IAM or start additional billed jobs."
+  }
+  assert {
+    condition     = !strcontains(aws_iam_role_policy.silver_ci["plan"].policy, "iam:PassRole") && !strcontains(aws_iam_role_policy.silver_ci["plan"].policy, "glue:CreateJob") && !strcontains(aws_iam_role_policy.silver_ci["apply"].policy, "glue:StartJobRun")
+    error_message = "Plan remains read-only; deployment must never start billed Spark work."
+  }
+  assert {
+    condition     = !strcontains(aws_iam_role_policy.silver_ci["apply"].policy, "/silver/*") && !strcontains(aws_iam_role_policy.silver_ci["apply"].policy, "iam:CreatePolicy")
+    error_message = "CI cannot modify silver data or create an unbounded runtime policy."
+  }
+}
 run "bronze_permissions_are_bounded" {
   command = apply
   variables { enable_bronze_permissions = true }
