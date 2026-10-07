@@ -12,6 +12,10 @@ run "history_cannot_start_paid_compute" {
   command = apply
   variables { enable_history_permissions = true }
   assert {
+    condition     = jsondecode(aws_iam_policy.history_ci["apply"].policy).Statement[2].Resource == "*" && jsondecode(aws_iam_policy.history_ci["apply"].policy).Statement[2].Condition.StringEquals["aws:RequestedRegion"] == var.region && jsondecode(aws_iam_policy.history_ci["apply"].policy).Statement[2].Condition.StringEquals["aws:RequestTag/Component"] == "history-2025"
+    error_message = "CreateApplication requires resource wildcard, bounded by region and pilot tags."
+  }
+  assert {
     condition     = !strcontains(aws_iam_policy.history_ci["apply"].policy, "StartJobRun") && !strcontains(aws_iam_policy.history_ci["apply"].policy, "StartApplication") && !strcontains(aws_iam_policy.history_ci["plan"].policy, "CreateApplication")
     error_message = "CI must not start paid workers or let plan create applications."
   }

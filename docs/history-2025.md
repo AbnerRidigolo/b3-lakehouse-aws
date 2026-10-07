@@ -1,6 +1,6 @@
 # Piloto histórico 2025: preparado, ainda não implantado
 
-Desenvolvimento local em 07/10/2026. A execução EMR, publicação dos dados na AWS e permissões novas ainda dependem de aprovação. Bronze e silver diárias continuam implantadas. Nenhum processamento EMR foi executado.
+Piloto autorizado em 07/10/2026, com reserva USD 0,50 para uma execução. Permissões bootstrap implantadas e 18 objetos históricos publicados na bronze, com SUCCESS no DynamoDB. A aplicação EMR ainda não foi implantada e nenhum processamento EMR foi executado. Bronze e silver diárias continuam implantadas.
 
 ## Fontes verificadas e preparação real local
 
@@ -53,3 +53,14 @@ Preparação real local é evidência separada dos testes unitários. Não houve
 Este código só executa 2025. Não afirmar backfill completo desde 1986: outros anos exigem revisão do escopo IAM, cobertura BCB e regras históricas, além de estimativa e autorização próprias. Gold/dbt, Athena e orquestração ponta a ponta continuam pendentes.
 
 Fontes técnicas: [service-linked role](https://docs.aws.amazon.com/emr/latest/EMR-Serverless-UserGuide/using-service-linked-roles.html), [Iceberg no EMR](https://docs.aws.amazon.com/emr/latest/EMR-Serverless-UserGuide/using-iceberg.html), [Spark/recursos](https://docs.aws.amazon.com/emr/latest/EMR-Serverless-UserGuide/jobs-spark.html), [versões](https://docs.aws.amazon.com/emr/latest/EMR-Serverless-UserGuide/release-versions.html), [Python archives](https://docs.aws.amazon.com/emr/latest/EMR-Serverless-UserGuide/using-python-libraries.html), [provider AWS 6.66 aplicação](https://github.com/hashicorp/terraform-provider-aws/blob/v6.66.0/internal/service/emrserverless/application.go) e [estimativa](costs/history.md).
+
+
+## Preparação AWS concluída em 07/10/2026
+
+Bootstrap: seis criações, zero alterações e exclusões, incluindo o service-linked role que não existia. ENABLE_HISTORY habilitada para o ciclo autorizado. Plano dev revisado: seis criações, zero alterações/exclusões; ainda não aplicado. PR #11 aberto; validação offline do commit inicial passou.
+
+Publicação CLI concluída: 18 objetos em bronze/history/year=2025/. Listagem S3 e leitura consistente DynamoDB confirmaram bronze#year=2025 SUCCESS, 83.722 cotações e 756 taxas. Manifesto e arquivos locais foram conferidos por SHA-256 antes de publicar, e objetos existentes só são aceitos com mesmo hash/tamanho. EMR verificará os hashes dos payloads na execução.
+
+A simulação identificou um erro no escopo IAM de CreateApplication: essa ação não suporta ARN de recurso. Corrigida somente essa criação para Resource=*, condicionada a aws:RequestedRegion=us-east-1, Project=b3-lakehouse-aws e Component=history-2025. Permissões sobre aplicações existentes continuam limitadas por ARN/tags; nenhuma permissão StartApplication/StartJobRun foi adicionada. [Referência oficial](https://docs.aws.amazon.com/service-authorization/latest/reference/list_emr-serverless.html). Plano da correção: zero criações, uma política alterada, zero exclusões; aplicado dentro da autorização do piloto. Teste Terraform cobre região/tags. Simulação AWS posterior permitiu o piloto e negou outra região e outro projeto.
+
+Budget observado antes do upload: conta USD 0,431 (07/10/2026 08:02:17 São Paulo); projeto USD 0,066 (07:54:01). Esses valores têm atraso, não incluem necessariamente os uploads recentes e não são custo final. Não houve chamada EMR.

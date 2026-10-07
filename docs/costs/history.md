@@ -1,6 +1,6 @@
 # Estimativa: um backfill EMR de 2025
 
-Preparada em 07/10/2026; ainda não autorizada. Teto total do projeto USD 10, com USD 2 reservados. Créditos não reduzem o consumo bruto do planejamento.
+Preparada e autorizada em 07/10/2026 para uma execução. Teto total do projeto USD 10, com USD 2 reservados. Créditos não reduzem o consumo bruto do planejamento.
 
 Escopo: bootstrap IAM, aplicação EMR sem capacidade inicial, três artefatos em S3, 18 objetos bronze e uma chamada EMR para 2025. Sem outros anos, repetição automática, cluster fixo, NAT Gateway, endpoint interativo, crawler ou optimizer. Fontes reais foram preparadas localmente sem AWS: 109.755.723 bytes antes do manifesto, 83.722 cotações no escopo e 756 taxas. Archive SDK tem 20.635.694 bytes; estimar até 250 MiB totais de inputs, artefatos, saídas, metadata e logs neste piloto.
 
@@ -17,3 +17,5 @@ Premissas: máximo 250 MiB persistidos por até 30 dias, até 20 MiB de logs e m
 Gate offline: `python scripts/cost_gate.py --spent 0.335 --pending 0.70 --estimate 0.50`: saldo de planejamento USD 6,465 após a reserva fixa de USD 2. Gate não é autorização e não impõe teto AWS.
 
 Depois: registrar JobRunId e totalResourceUtilization (vCPUHour/memoryGBHour/storageGBHour quando informados), tempo, tamanho dos objetos, snapshots e custo atualizado por tag/serviço. Histórico completo recebe estimativa separada; não extrapolar aprovação deste ano para 1986–2026.
+
+Leitura atualizada antes da preparação AWS: conta USD 0,431 e projeto USD 0,066, com atualização na manhã de 07/10/2026. Gate com spent=0.431, pending=0.70, estimate=0.50: saldo USD 6,369 após reserva de USD 2. IAM e publicação bronze concluídos; execução EMR ainda pendente.

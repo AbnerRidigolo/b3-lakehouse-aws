@@ -28,7 +28,9 @@ resource "aws_iam_policy" "history_ci" {
     { Effect = "Allow", Action = ["emr-serverless:GetApplication", "emr-serverless:ListTagsForResource"], Resource = local.history_apps, Condition = local.history_tags },
     { Effect = "Allow", Action = ["iam:GetRole", "iam:GetRolePolicy", "iam:ListRolePolicies", "iam:ListAttachedRolePolicies"], Resource = local.history_role }
     ], [for statement in [
-      { Effect = "Allow", Action = "emr-serverless:CreateApplication", Resource = "arn:aws:emr-serverless:${var.region}:${var.account_id}:/*", Condition = { StringEquals = { "aws:RequestTag/Project" = local.project, "aws:RequestTag/Component" = "history-2025" } } },
+      # CreateApplication has no resource-level ARN authorization. Bound the
+      # wildcard to this regional, tagged pilot; existing applications stay scoped.
+      { Effect = "Allow", Action = "emr-serverless:CreateApplication", Resource = "*", Condition = { StringEquals = { "aws:RequestedRegion" = var.region, "aws:RequestTag/Project" = local.project, "aws:RequestTag/Component" = "history-2025" } } },
       { Effect = "Allow", Action = ["emr-serverless:UpdateApplication", "emr-serverless:DeleteApplication", "emr-serverless:TagResource", "emr-serverless:UntagResource"], Resource = local.history_apps, Condition = local.history_tags },
       { Effect = "Allow", Action = "emr-serverless:TagResource", Resource = local.history_apps, Condition = { StringEquals = { "aws:RequestTag/Project" = local.project, "aws:RequestTag/Component" = "history-2025" } } },
       { Effect = "Allow", Action = ["iam:CreateRole", "iam:PutRolePermissionsBoundary"], Resource = local.history_role, Condition = { StringEquals = { "iam:PermissionsBoundary" = aws_iam_policy.history_boundary[0].arn } } },
