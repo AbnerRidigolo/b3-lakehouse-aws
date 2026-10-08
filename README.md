@@ -2,7 +2,7 @@
 
 Projeto em preparação para ingestão de cotações B3 e séries do Banco Central, processamento Spark e tabelas Apache Iceberg consultáveis no Athena.
 
-**Estado atual: fundação, bronze e silver incremental implantadas em us-east-1. Data 01/10/2026 carregada em duas tabelas Iceberg v2 pelo Glue: 317 cotações e 3 taxas. Repetição MERGE validada sem duplicação. Scheduler permanece desativado. Computação estimada das duas chamadas Glue: USD 0,06417; budget da conta ainda informa USD 0,335 com atraso; custo final por serviço pendente.**
+**Estado atual: fundação, bronze e silver incremental implantadas em us-east-1. Datas 2025 e 01/10/2026 carregadas em duas tabelas Iceberg v2 pelo Glue: 84.039 cotações e 759 taxas no total. Repetição MERGE validada sem duplicação. Scheduler permanece desativado. Computação estimada das duas chamadas Glue: USD 0,06417; budget da conta ainda informa USD 0,335 com atraso; custo final por serviço pendente.**
 
 ## Arquitetura planejada
 
@@ -14,7 +14,7 @@ Projeto em preparação para ingestão de cotações B3 e séries do Banco Centr
 - DynamoDB para controle de execução; SQS, SNS e CloudWatch para falhas e observabilidade.
 - Terraform e GitHub Actions com OIDC para infraestrutura.
 
-Bootstrap, budgets, workflows, ingestão bronze e silver incremental estão implantados. EMR/histórico, gold e orquestração ponta a ponta permanecem planejados.
+Bootstrap, budgets, workflows, ingestão bronze e silver incremental estão implantados. Backfill completo anterior a 2025, gold e orquestração ponta a ponta permanecem planejados; EMR não executado por bloqueio de habilitação da conta.
 
 ## Preparação local
 
@@ -44,7 +44,7 @@ Leia [o estado da Fase 0](docs/phase-0.md) antes de prosseguir.
 0. Acesso temporário via IAM — validado.
 1. Fundação e CI/CD — bootstrap e budgets implantados; CI e OIDC validados; plan/apply e artifact criptografado validados.
 2. Ingestão bronze — implantada e validada com carga real e idempotência; Scheduler criado e desativado.
-3. Silver incremental — implantada e validada com carga e repetição MERGE no Glue/Iceberg. EMR 2025 bloqueado por habilitação da conta; alternativa Glue autorizada e preparada, com implantação e execução pendentes. Histórico completo ainda não implementado.
+3. Silver incremental — implantada e validada com carga e repetição MERGE no Glue/Iceberg. EMR bloqueado por habilitação da conta; histórico 2025 executado e validado no Glue, preservando 2026. Histórico completo ainda não implementado.
 4. Gold com dbt — pendente.
 5. Orquestração e confiabilidade — pendente.
 6. Evidências, documentação e custos — pendente.
@@ -65,4 +65,4 @@ Consulte [a fase silver incremental](docs/phase-3.md), [a estimativa aprovada do
 
 Consulte [o piloto histórico 2025 para revisão](docs/history-2025.md) e [sua estimativa](docs/costs/history.md). Fontes anuais preparadas e validadas localmente; nenhum backfill EMR executado.
 
-[Backfill 2025 no Glue autorizado para preservar o plano FREE](docs/history-glue.md). Nenhum job histórico executado ainda.
+[Backfill 2025 no Glue autorizado para preservar o plano FREE](docs/history-glue.md). Histórico 2025 executado e validado; [evidências reais](docs/history-glue-evidence.md).
