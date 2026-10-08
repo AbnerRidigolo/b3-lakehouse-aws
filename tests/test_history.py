@@ -53,8 +53,9 @@ def test_glue_framework_arguments_do_not_change_pinned_data_options():
     with pytest.raises(SystemExit):options(base+['--unexpected','value'])
 
 
-def test_legacy_official_zip_member_supported(tmp_path):
-    result = prepare_b3(annual(tmp_path, year=1986, member='COTAHIST.A1986'), 1986, tmp_path/'out')
+@pytest.mark.parametrize('member', ['COTAHIST.A1986', 'COTAHIST_A1986'])
+def test_legacy_official_zip_member_supported(tmp_path, member):
+    result = prepare_b3(annual(tmp_path, year=1986, member=member), 1986, tmp_path/'out')
     assert result['scoped_rows'] == 1
 
 
