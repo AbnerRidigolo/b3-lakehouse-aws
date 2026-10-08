@@ -19,7 +19,8 @@ def build(root):
     archive(out/'history-libs.zip',sources)
     deps=root/'local/history-sdk'
     if not (deps/'boto3/__init__.py').exists(): raise ValueError('Install scripts/requirements-history.txt into local/history-sdk first')
-    files={p.relative_to(deps).as_posix():p.read_bytes() for p in deps.rglob('*') if p.is_file() and '__pycache__' not in p.parts and not p.name.endswith('.pyc') and ('.dist-info' not in str(p.parent) or p.name.lower().startswith(('license', 'notice', 'copying')))}
+    # Console entrypoints embed the host Python path and are not used by workers.
+    files={p.relative_to(deps).as_posix():p.read_bytes() for p in deps.rglob('*') if p.is_file() and 'bin' not in p.relative_to(deps).parts and '__pycache__' not in p.parts and not p.name.endswith('.pyc') and ('.dist-info' not in str(p.parent) or p.name.lower().startswith(('license', 'notice', 'copying')))}
     archive(out/'history-sdk.zip',files)
     (out/'history-job.py').write_bytes((root/'src/history/job.py').read_bytes().replace(b'\r\n',b'\n'))
 

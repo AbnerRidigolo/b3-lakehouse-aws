@@ -12,7 +12,7 @@ run "history_cannot_start_paid_compute" {
   command = apply
   variables { enable_history_permissions = true }
   assert {
-    condition     = jsondecode(aws_iam_policy.history_ci["apply"].policy).Statement[2].Resource == "*" && jsondecode(aws_iam_policy.history_ci["apply"].policy).Statement[2].Condition.StringEquals["aws:RequestedRegion"] == var.region && jsondecode(aws_iam_policy.history_ci["apply"].policy).Statement[2].Condition.StringEquals["aws:RequestTag/Component"] == "history-2025"
+    condition     = one([for s in jsondecode(aws_iam_policy.history_ci["apply"].policy).Statement : s if s.Action == "emr-serverless:CreateApplication"]).Resource == "*" && one([for s in jsondecode(aws_iam_policy.history_ci["apply"].policy).Statement : s if s.Action == "emr-serverless:CreateApplication"]).Condition.StringEquals["aws:RequestedRegion"] == var.region && one([for s in jsondecode(aws_iam_policy.history_ci["apply"].policy).Statement : s if s.Action == "emr-serverless:CreateApplication"]).Condition.StringEquals["aws:RequestTag/Component"] == "history-2025"
     error_message = "CreateApplication requires resource wildcard, bounded by region and pilot tags."
   }
   assert {

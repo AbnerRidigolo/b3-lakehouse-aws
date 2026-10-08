@@ -8,7 +8,7 @@ Projeto em preparação para ingestão de cotações B3 e séries do Banco Centr
 
 - EventBridge Scheduler e Step Functions para orquestração.
 - Lambda para ingestão em S3 bronze.
-- Glue PySpark para incremental e EMR Serverless para histórico sob demanda.
+- Glue PySpark para incremental e backfill 2025 autorizado; EMR Serverless preparado, com criação bloqueada por habilitação da conta.
 - Iceberg e Glue Data Catalog para silver e gold.
 - dbt com Athena em uma tarefa ECS Fargate, com imagem no ECR.
 - DynamoDB para controle de execução; SQS, SNS e CloudWatch para falhas e observabilidade.
@@ -44,7 +44,7 @@ Leia [o estado da Fase 0](docs/phase-0.md) antes de prosseguir.
 0. Acesso temporário via IAM — validado.
 1. Fundação e CI/CD — bootstrap e budgets implantados; CI e OIDC validados; plan/apply e artifact criptografado validados.
 2. Ingestão bronze — implantada e validada com carga real e idempotência; Scheduler criado e desativado.
-3. Silver incremental — implantada e validada com carga e repetição MERGE no Glue/Iceberg. Piloto EMR de 2025 preparado localmente; implantação e execução pendentes. Histórico completo ainda não implementado.
+3. Silver incremental — implantada e validada com carga e repetição MERGE no Glue/Iceberg. EMR 2025 bloqueado por habilitação da conta; alternativa Glue autorizada e preparada, com implantação e execução pendentes. Histórico completo ainda não implementado.
 4. Gold com dbt — pendente.
 5. Orquestração e confiabilidade — pendente.
 6. Evidências, documentação e custos — pendente.
@@ -64,3 +64,5 @@ Consulte [as evidências da primeira carga bronze real](docs/bronze-data-evidenc
 Consulte [a fase silver incremental](docs/phase-3.md), [a estimativa aprovada do piloto](docs/costs/silver.md) e [as evidências das duas execuções Glue](docs/silver-data-evidence.md). Silver habilitada no ambiente implantado, job sob demanda; defaults Terraform permanecem desativados para novos ambientes.
 
 Consulte [o piloto histórico 2025 para revisão](docs/history-2025.md) e [sua estimativa](docs/costs/history.md). Fontes anuais preparadas e validadas localmente; nenhum backfill EMR executado.
+
+[Backfill 2025 no Glue autorizado para preservar o plano FREE](docs/history-glue.md). Nenhum job histórico executado ainda.
