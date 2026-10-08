@@ -58,7 +58,7 @@ def parse_rate(payload, target, series):
     if value != value.quantize(Decimal("0.0000000001")) or value >= Decimal("10000000000"):
         raise ValueError("Rate exceeds DECIMAL(20,10)")
     return {"trading_date": target, "series": series, "value": value,
-            "unit": "BRL/USD" if series == "usd_brl_sell" else "percent_per_day"}
+            "unit": ("BRL/USD" if target >= date(1994, 7, 1) else "current_currency/USD") if series == "usd_brl_sell" else "percent_per_day"}
 
 
 def safe_identifier(value):

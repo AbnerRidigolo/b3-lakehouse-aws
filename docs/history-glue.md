@@ -1,4 +1,4 @@
-# Backfill 2025 no Glue — alternativa autorizada
+# Backfill 2025 no Glue — implantado e validado
 
 Em 07/10/2026, o proprietário autorizou substituir o EMR por Glue neste piloto, preservando o plano FREE. Reserva USD 0,50, UMA execução de 2025. O EMR permanece preparado e não executado, devido a [SubscriptionRequiredException](emr-subscription-block.md). Nenhum upgrade de conta foi solicitado.
 
@@ -25,3 +25,7 @@ Resultado local: 34 testes Python e 18 subtestes passaram; quatro runs simulados
 Computação máxima estimada: 2 DPU ×15/60 h×USD 0,44 = USD 0,22 pela [referência oficial Glue](https://aws.amazon.com/glue/pricing/). Reserva total USD 0,50 cobre margem de faturamento e serviços auxiliares; não é teto técnico absoluto. Sem repetição, outros anos ou conversão de plano. Atualizar o budget antes de iniciar.
 
 Publicar commit somente após autorização, proprietário abre PR/merge. Aplicar o bootstrap revisado, configurar as flags e revisar novo plano GitHub contra o estado atual. Depois do apply, verificar limites, arquivos, IAM, fonte SUCCESS e inexistência de execução anterior antes de iniciar UMA chamada. Registrar JobRunId, DPUSeconds, contagens, snapshots, preservação de 2026 e billing com período explícito. Histórico completo, gold e orquestração continuam pendentes.
+
+## Execução concluída
+
+[Uma carga real de 2025 passou](history-glue-evidence.md): 83.722 cotações e 756 taxas, Glue SUCCEEDED e DynamoDB SUCCESS. Snapshots adicionaram os dados sem remover registros/arquivos de 2026. ExecutionTime 110 segundos, DPUSeconds 221, computação estimada USD 0,02701; billing ainda atrasado. Plano FREE permaneceu ativo. Sem rerun anual ou outros anos. As seções anteriores descrevem a configuração revisada do piloto já implantado.

@@ -41,9 +41,9 @@ resource "aws_glue_job" "history" {
     python_version  = "3"
     script_location = "s3://${local.bucket}/scripts/history-job.py"
   }
+  default_arguments = { "--year" = "2025" }
   non_overridable_arguments = {
     "--engine"                       = "glue"
-    "--year"                         = "2025"
     "--bronze_bucket"                = "b3-lakehouse-aws-bronze-${var.account_id}"
     "--silver_bucket"                = local.bucket
     "--runs_table"                   = "b3-lakehouse-aws-bronze-runs"
