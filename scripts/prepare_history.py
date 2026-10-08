@@ -6,7 +6,7 @@ import sys
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from src.history.prepare import checked_year, prepare_b3, prepare_rates, digest, MAX_ZIP
+from src.history.prepare import checked_year, prepare_b3, prepare_rates, digest, MAX_ZIP, audit_quotes
 
 
 def download(url, path, cap):
@@ -27,6 +27,7 @@ def download(url, path, cap):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--year', type=int, default=2025)
+    parser.add_argument('--historical-contract', action='store_true', help='Quarantine invalid quotes and record dates before BCB series begin')
     args = parser.parse_args(); year = checked_year(args.year)
     root = Path(__file__).resolve().parents[1] / 'local' / f'history-{year}'
     # Never mix leftover monthly files from an earlier preparation.
@@ -34,13 +35,16 @@ def main():
     root.mkdir(parents=True)
     urls = {'b3': f'https://bvmf.bmfbovespa.com.br/InstDados/SerHist/COTAHIST_A{year}.ZIP'}
     raw = root / 'raw.zip'; download(urls['b3'], raw, MAX_ZIP)
-    checked = prepare_b3(raw, year, root)
+    checked = prepare_b3(raw, year, root, quarantine_invalid=args.historical_contract)
+    audit = audit_quotes(root, year)
+    (root / 'quote-audit.json').write_text(json.dumps(audit, indent=2) + '\n', encoding='utf-8')
+    if not audit['ready']: raise ValueError('Quotation preflight failed; inspect quote-audit.json')
     rates = {}
     query = urlencode({'formato':'json','dataInicial':f'01/01/{year}','dataFinal':f'31/12/{year}'})
     for series, code in [('cdi',12),('selic',11),('usd_brl_sell',1)]:
         urls[series] = f'https://api.bcb.gov.br/dados/serie/bcdata.sgs.{code}/dados?{query}'
         path = root / f'{series}.json'; download(urls[series], path, 1024 * 1024); rates[series] = path.read_bytes()
-    checked['rate_rows'] = prepare_rates(rates, year, checked['days'], root / 'rates.jsonl')
+    checked['rate_rows'] = prepare_rates(rates, year, checked['days'], root / 'rates.jsonl', historical_coverage=args.historical_contract)
     files = [{'name':p.name, 'bytes':p.stat().st_size, 'sha256':digest(p)} for p in sorted(root.iterdir()) if p.is_file()]
     manifest = {'version':1, 'year':year, 'sources':urls, 'files':files, **checked}
     (root / 'manifest.json').write_text(json.dumps(manifest, indent=2, sort_keys=True) + '\n', encoding='utf-8')

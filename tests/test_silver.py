@@ -58,3 +58,12 @@ def test_rate_cannot_overflow_or_lose_precision(value):
 def test_catalog_names_cannot_inject_sql():
     assert safe_identifier('b3_lakehouse_silver') == 'b3_lakehouse_silver'
     with pytest.raises(ValueError): safe_identifier('silver; DROP TABLE x')
+
+
+def test_historical_exchange_rate_is_not_labelled_as_reais():
+    raw = b'[{"data":"01/06/1994","valor":"1000"}]'
+    result = parse_rate(raw, date(1994, 6, 1), 'usd_brl_sell')
+    assert result['unit'] == 'current_currency/USD'
+    assert result['value'] == Decimal('1000')
+    raw = b'[{"data":"01/07/1994","valor":"1"}]'
+    assert parse_rate(raw, date(1994, 7, 1), 'usd_brl_sell')['unit'] == 'BRL/USD'

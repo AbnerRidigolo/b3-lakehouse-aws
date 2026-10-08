@@ -25,9 +25,10 @@ def run():
     from pyspark.sql import SparkSession, functions as F
     from src.silver.transform import parse_quote, safe_identifier
     # Glue injects framework arguments such as JOB_NAME. Data parameters remain
-    # mandatory; the Glue module pins them through non_overridable_arguments.
+    # mandatory; Glue pins destinations and engine; year is explicitly selected.
     a = options(sys.argv[1:])
-    if a.year != '2025': raise ValueError('Only pilot year 2025 is authorized by this version')
+    if not a.year.isdigit() or not 1986 <= int(a.year) <= 2025:
+        raise ValueError('Only complete historical years 1986-2025 are supported')
     year = int(a.year); database = safe_identifier(a.database)
     s3 = boto3.client('s3'); table = boto3.resource('dynamodb').Table(a.runs_table)
     source = table.get_item(Key={'pk':f'bronze#year={year}'}, ConsistentRead=True).get('Item',{})
@@ -39,6 +40,8 @@ def run():
         raise ValueError('Untrusted historical manifest')
     manifest = json.loads(payload)
     if manifest['year'] != year or manifest['version'] != 1: raise ValueError('Invalid manifest year/version')
+    if manifest.get('source_scoped_rows', manifest['scoped_rows']) != manifest['scoped_rows'] + manifest.get('quarantined_rows', 0):
+        raise ValueError('Quarantine reconciliation failed')
     key, owner, now = {'pk':f'history#{year}'}, uuid.uuid4().hex, int(time.time())
     table.update_item(Key=key, UpdateExpression='SET #s=:running, owner_id=:owner, lease_until=:lease, updated_at=:now, expires_at=:expiry',
         ConditionExpression='attribute_not_exists(lease_until) OR lease_until < :now', ExpressionAttributeNames={'#s':'status'},
@@ -85,7 +88,7 @@ def run():
             actual=spark.table(target).filter(F.year('trading_date')==year).cache()
             if actual.exceptAll(frame).limit(1).count() or frame.exceptAll(actual).limit(1).count(): raise ValueError('Annual Iceberg read-back differs')
             counts[name]=actual.count();actual.unpersist()
-        table.update_item(Key=key,UpdateExpression='SET #s=:success, row_counts=:counts, manifest_sha256=:hash, updated_at=:now REMOVE lease_until',ConditionExpression='owner_id=:owner',ExpressionAttributeNames={'#s':'status'},ExpressionAttributeValues={':success':'SUCCESS',':counts':counts,':hash':source['manifest_sha256'],':now':int(time.time()),':owner':owner})
+        table.update_item(Key=key,UpdateExpression='SET #s=:success, row_counts=:counts, quarantined_rows=:quarantined, manifest_sha256=:hash, updated_at=:now REMOVE lease_until',ConditionExpression='owner_id=:owner',ExpressionAttributeNames={'#s':'status'},ExpressionAttributeValues={':success':'SUCCESS',':counts':counts,':quarantined':manifest.get('quarantined_rows',0),':hash':source['manifest_sha256'],':now':int(time.time()),':owner':owner})
         print(json.dumps({'year':year,'status':'SUCCESS','rows':counts}))
     except Exception as exc:
         table.update_item(Key=key,UpdateExpression='SET #s=:failed, error_type=:error, updated_at=:now REMOVE lease_until',ConditionExpression='owner_id=:owner',ExpressionAttributeNames={'#s':'status'},ExpressionAttributeValues={':failed':'FAILED',':error':type(exc).__name__,':now':int(time.time()),':owner':owner})

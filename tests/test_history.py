@@ -51,3 +51,55 @@ def test_glue_framework_arguments_do_not_change_pinned_data_options():
     a=options(base+['--engine','glue','--JOB_NAME','historical-glue','--job-bookmark-option','job-bookmark-disable'])
     assert a.year=='2025' and a.engine=='glue' and a.bronze_bucket=='bronze'
     with pytest.raises(SystemExit):options(base+['--unexpected','value'])
+
+
+def test_legacy_official_zip_member_supported(tmp_path):
+    result = prepare_b3(annual(tmp_path, year=1986, member='COTAHIST.A1986'), 1986, tmp_path/'out')
+    assert result['scoped_rows'] == 1
+
+
+def test_audit_reports_bad_ohlc_and_conflicts_without_modifying_sources(tmp_path):
+    from src.history.prepare import audit_quotes
+    from test_silver import quotation
+    row = bytearray(quotation()); row[2:10] = b'20251001'
+    bad = bytearray(row); bad[56:69] = b'0000000099999'
+    conflict = bytearray(row); conflict[147:152] = b'00013'
+    path = tmp_path/'quotes-10.txt'
+    original = b'\n'.join([row, row, bad, conflict]) + b'\n'
+    path.write_bytes(original)
+    report = audit_quotes(tmp_path, 2025)
+    assert report['rows'] == 4 and report['exact_duplicates'] == 1
+    assert report['unique_valid_keys'] == 1 and not report['ready']
+    assert [x['reason'] for x in report['issues']] == ['Invalid OHLC range', 'Conflicting quotation key']
+    assert path.read_bytes() == original
+
+
+def test_quarantine_preserves_source_record_and_reconciles_counts(tmp_path):
+    from test_silver import quotation
+    valid = bytearray(quotation()); valid[2:10] = b'19861001'
+    bad = bytearray(valid); bad[56:69] = b'0000000099999'
+    source = annual(tmp_path, year=1986, footer=4)
+    with zipfile.ZipFile(source) as archive:
+        records = archive.read(archive.namelist()[0]).splitlines()
+    with zipfile.ZipFile(source, 'w') as archive:
+        archive.writestr('COTAHIST.A1986', b'\r\n'.join([records[0], valid, bad, records[-1]]) + b'\r\n')
+    result = prepare_b3(source, 1986, tmp_path/'out', quarantine_invalid=True)
+    assert result['source_scoped_rows'] == result['scoped_rows'] + result['quarantined_rows'] == 2
+    entry = json.loads((tmp_path/'out/quarantine.jsonl').read_text(encoding='utf-8'))
+    assert entry['line'] == 3 and entry['record'].encode('latin-1') == bad
+    assert entry['reason'] == 'Invalid OHLC range'
+
+
+def test_historical_absence_is_explicit_and_strict_default_still_blocks(tmp_path):
+    payload = json.dumps([{'data':'04/06/1986','valor':'0.05'}]).encode()
+    inputs = {name: payload for name in ['cdi','selic','usd_brl_sell']}
+    inputs['cdi'] = json.dumps([{'data':'03/06/1986','valor':'0.05'},{'data':'04/06/1986','valor':'0.05'}]).encode()
+    inputs['usd_brl_sell'] = inputs['cdi']
+    assert prepare_rates(inputs, 1986, ['1986-06-03','1986-06-04'], tmp_path/'rates.jsonl', historical_coverage=True) == 5
+    report = json.loads((tmp_path/'rate-coverage.json').read_text(encoding='utf-8'))
+    assert report['unavailable_before_series_start']['selic'] == ['1986-06-03']
+    prepare_rates(inputs, 1986, ['1986-06-05'], tmp_path/'rates.jsonl', historical_coverage=True)
+    report = json.loads((tmp_path/'rate-coverage.json').read_text(encoding='utf-8'))
+    assert report['missing_observations']['cdi'] == ['1986-06-05']
+    with pytest.raises(ValueError, match='coverage missing'):
+        prepare_rates(inputs, 1986, ['1986-06-05'], tmp_path/'strict.jsonl')

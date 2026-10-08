@@ -15,8 +15,12 @@ run "one_bounded_glue_history_job" {
     error_message = "Keep one bounded run without retries or automatic execution."
   }
   assert {
-    condition     = aws_glue_job.history.non_overridable_arguments["--year"] == "2025" && aws_glue_job.history.non_overridable_arguments["--engine"] == "glue" && aws_iam_role.glue.permissions_boundary == var.permissions_boundary_arn
-    error_message = "Pin the authorized year, Glue engine and runtime boundary."
+    condition     = aws_glue_job.history.default_arguments["--year"] == "2025" && !contains(keys(aws_glue_job.history.non_overridable_arguments), "--year") && aws_glue_job.history.non_overridable_arguments["--engine"] == "glue" && aws_iam_role.glue.permissions_boundary == var.permissions_boundary_arn
+    error_message = "Keep the default pilot year, permit an explicit historical year, and pin engine/boundary."
+  }
+  assert {
+    condition     = length(aws_iam_role_policy.glue.policy) <= 6144
+    error_message = "The shared runtime policy must fit the managed permissions boundary limit."
   }
   assert {
     condition     = aws_glue_job.history.connections == null && aws_cloudwatch_log_group.history["error"].retention_in_days == 3
