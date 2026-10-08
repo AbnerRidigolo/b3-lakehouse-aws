@@ -32,7 +32,7 @@ def prepare_b3(path, year, output, quarantine_invalid=False):
     try:
         with zipfile.ZipFile(path) as archive:
             members = archive.infolist()
-            if len(members) != 1 or members[0].filename.upper() not in {f'COTAHIST_A{year}.TXT', f'COTAHIST.A{year}'}:
+            if len(members) != 1 or members[0].filename.upper() not in {f'COTAHIST_A{year}.TXT', f'COTAHIST.A{year}', f'COTAHIST_A{year}'}:
                 raise ValueError("Unexpected annual ZIP member")
             if members[0].file_size > MAX_EXPANDED: raise ValueError("Expanded annual file too large")
             with archive.open(members[0]) as source:
