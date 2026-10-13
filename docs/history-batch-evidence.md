@@ -1,5 +1,7 @@
 # Evidências — histórico 1986 e lote 1987–1994
 
+> Registro da etapa anterior: o lote 1995–2024 foi concluído posteriormente. Consulte o [estado consolidado](history-complete-evidence.md).
+
 Validação real em 08/10/2026, conta do projeto em us-east-1. Os anos 1986–1994 e 2025 estão carregados, além do incremental de 01/10/2026. Total atual: 790,614 cotações e 7,327 taxas nas duas tabelas Iceberg. Gold e orquestração ponta a ponta continuam pendentes.
 
 ## Lote autorizado de 1987–1994
