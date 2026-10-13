@@ -1,6 +1,6 @@
 # Fase 4 — gold preparada para revisão
 
-Estado em 12/10/2026: código local, ainda não implantado nem executado no Athena/Fargate. O histórico real da silver está documentado em [evidências consolidadas](history-complete-evidence.md).
+Estado em 12/10/2026: código integrado na main pelo PR #15, CI e build Linux da imagem aprovados. A gold ainda não foi implantada nem executada no Athena/Fargate. Consulte o [plano de continuidade](CONTINUIDADE.md) antes de operar. O histórico real da silver está documentado em [evidências consolidadas](history-complete-evidence.md).
 
 ## Modelos
 
@@ -37,7 +37,7 @@ O processo dbt tem prazo de 20 minutos. Esse prazo não inclui pull/provisioname
 
 ## Sequência de implantação após revisão
 
-1. Publicar os commits somente com autorização do proprietário; ele abre e integra o PR. O CI deve aprovar testes e build Linux da imagem.
+1. Concluído: commits publicados com autorização e integrados pelo proprietário no PR #15; CI e build Linux passaram. Para novas alterações, manter aprovação por commit e PR/merge pelo proprietário.
 2. No CloudShell autenticado, executar `python scripts/gold_preflight.py` no checkout revisado. Conferir plano FREE, budgets atualizados e existência de AWSServiceRoleForECS. Essa leitura não comprova elegibilidade de Fargate nem substitui o primeiro piloto.
 3. Conferir o teto total com `scripts/cost_gate.py`, incluindo consumo ainda não faturado e reserva de USD 2. Aprovar a [estimativa](costs/gold.md) antes de qualquer apply/publicação/execução.
 4. Revisar e aplicar bootstrap com `enable_gold_permissions=true`. Criar o service-linked role somente se estiver ausente, usando `create_ecs_service_role=true`; preservar configurações anteriores.
@@ -50,6 +50,6 @@ O processo dbt tem prazo de 20 minutos. Esse prazo não inclui pull/provisioname
 
 48 testes e 24 subtestes Python passaram; modelos reais são renderizados e executados com dados sintéticos em DuckDB, após tradução de Trino pelo SQLGlot. `dbt parse` passou com dbt-core 1.12.5 e dbt-athena 1.11.1. Testes Terraform usam provider simulado. Nenhum desses testes comprova uma execução real de Athena/Iceberg.
 
-Docker Desktop não disponibilizou o engine Linux local. O build da imagem está pendente no CI e é obrigatório antes da publicação. Dependências diretas dbt/adaptador estão fixadas; dependências transitivas e a imagem base ainda podem mudar entre builds. A implantação usa o digest da imagem construída, não uma tag mutável.
+Docker Desktop não disponibilizou o engine Linux local. O build Linux passou no CI 38327864068; a imagem ainda não foi publicada no ECR e será reconstruída no workflow de publicação. Dependências diretas dbt/adaptador estão fixadas; dependências transitivas e a imagem base ainda podem mudar entre builds. A implantação usa o digest da imagem construída, não uma tag mutável.
 
 Referências: [configuração oficial dbt-Athena](https://docs.getdbt.com/docs/local/connect-data-platform/athena-setup), [configurações Iceberg e partições](https://docs.getdbt.com/reference/resource-configs/athena-configs).
