@@ -14,7 +14,7 @@ def main():
         raise RuntimeError('Unexpected account; stopping')
     report = {'account': account, 'region': 'us-east-1'}
     for name, operation in {
-        'account_plan': lambda: session.client('freetier').get_account_plan(),
+        'account_plan': lambda: session.client('freetier').get_account_plan_state(),
         'budgets': lambda: session.client('budgets').describe_budgets(AccountId=account),
         'ecs_service_role': lambda: session.client('iam').get_role(RoleName='AWSServiceRoleForECS'),
         'ecs_clusters': lambda: session.client('ecs').list_clusters(maxResults=10),
@@ -31,6 +31,9 @@ def main():
             report[name] = response
         except ClientError as exc:
             report[name] = {'error': exc.response['Error']['Code']}
+        except AttributeError:
+            # Older SDKs lack the operation; record it instead of aborting other reads.
+            report[name] = {'error': 'OperationUnavailableInSDK'}
     print(json.dumps(report, default=str, indent=2))
 
 

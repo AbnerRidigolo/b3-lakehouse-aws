@@ -89,7 +89,7 @@ As estimativas de computação dos lotes não são o faturamento total. O lote 1
 ### A. Conferir acesso, custo e elegibilidade
 
 1. Confirmar branch/commit, árvore de trabalho e estado remoto antes de editar. Preservar alterações do usuário.
-2. No CloudShell, obter checkout do commit revisado e executar `python scripts/gold_preflight.py`. Conferir antes se boto3/botocore e a API `get_account_plan` estão disponíveis; se não estiverem, usar a CLI oficial ou dependências isoladas, sem registrar credenciais.
+2. No CloudShell, obter checkout do commit revisado e executar `python scripts/gold_preflight.py`. Conferir antes se boto3/botocore e a API `get_account_plan_state` estão disponíveis; se não estiverem, usar a CLI oficial ou dependências isoladas, sem registrar credenciais.
 3. O preflight consulta identidade, plano, budgets, service-linked role ECS, clusters e repositório ECR. Erros de permissão ou API não comprovam ausência de recurso. Uma listagem de ECS não comprova que o FREE permite executar Fargate.
 4. Obter gasto bruto atualizado, intervalo coberto e atraso de atualização. Os budgets da conta e do projeto podem cobrir o mesmo consumo; **não somá-los**. Preservar a tag Project e verificar sua ativação para alocação de custos, sem afirmar que já está ativa.
 5. Aplicar `scripts/cost_gate.py` com valores reais de gasto, pendências e estimativa. Reserva proposta: **USD 1** para publicação/infraestrutura/uma execução, detalhada em [costs/gold.md](costs/gold.md). A estimativa não é aprovação nem bloqueio automático de gasto.
