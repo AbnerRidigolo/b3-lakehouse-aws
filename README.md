@@ -1,68 +1,117 @@
 # B3 Lakehouse AWS
 
-Projeto de ingestão de cotações B3 e séries do Banco Central, processamento Spark e tabelas Apache Iceberg consultáveis no Athena.
+Lakehouse de dados de mercado com fontes reais da B3 e do Banco Central, ingestão em Python, processamento Spark, tabelas Apache Iceberg e infraestrutura como código na AWS.
 
-**Estado atual: fundação, bronze e silver implantadas em us-east-1. Histórico completo 1986–2025, além de 01/10/2026, carregado e validado no Glue/Iceberg: 3.185.477 cotações e 29.917 taxas. Scheduler desativado. Gold e orquestração ainda pendentes. [Evidências e custos estimados](docs/history-complete-evidence.md).**
+**Estado verificado em 12/10/2026:** bronze e silver implantadas em `us-east-1`; histórico completo de **1986–2025** carregado, além do incremental de **01/10/2026**. A gold tem código integrado e imagem construída no CI, mas ainda não foi implantada nem executada na AWS. O agendamento permanece desligado.
 
-## Arquitetura planejada
+> **Continuidade do projeto:** leia o [plano de conclusão e passagem para outro agente](docs/CONTINUIDADE.md). Ele registra o ponto de parada, as decisões já tomadas, os bloqueios, a sequência de implantação e os critérios para encerrar cada etapa.
 
-- EventBridge Scheduler e Step Functions para orquestração.
-- Lambda para ingestão em S3 bronze.
-- Glue PySpark para incremental e backfill histórico autorizado; EMR Serverless preparado, com criação bloqueada por habilitação da conta.
-- Iceberg e Glue Data Catalog para silver e gold.
-- dbt com Athena em uma tarefa ECS Fargate, com imagem no ECR.
-- DynamoDB para controle de execução; SQS, SNS e CloudWatch para falhas e observabilidade.
-- Terraform e GitHub Actions com OIDC para infraestrutura.
+## Resultados já demonstrados
 
-Bootstrap, budgets, workflows, ingestão bronze e silver incremental estão implantados. Backfill de 1986–2025 carregado e validado; gold e orquestração ponta a ponta permanecem pendentes; EMR não executado por bloqueio de habilitação da conta.
+- **3.185.477 cotações e 29.917 taxas** nas tabelas silver, segundo as evidências salvas na conclusão das cargas.
+- **40 anos completos (1986–2025)** processados; o ano de 2026 não está completo.
+- **374 registros em quarentena**, preservando rastreabilidade; dados brutos mantidos na bronze.
+- Ingestão e MERGE incremental com repetição validada. A repetição do backfill anual ainda não foi testada.
+- Infraestrutura Terraform, CI/CD no GitHub Actions, autenticação OIDC e ambientes protegidos para plan/apply.
+- Modelagem gold com testes para moedas históricas, fator de cotação, lacunas do CDI e possíveis eventos corporativos.
 
-## Preparação local
+As contagens vêm das [evidências do histórico](docs/history-complete-evidence.md); não representam uma nova consulta em tempo real à AWS.
 
-No PowerShell, execute a verificação offline:
+## O que está pronto e o que falta
+
+| Componente | Estado confirmado |
+| --- | --- |
+| Bootstrap, estado remoto, budgets e OIDC | Implantados e validados |
+| Lambda, S3 bronze e controle DynamoDB | Implantados; carga real e idempotência verificadas |
+| Glue PySpark e silver Iceberg | Implantados; incremental e histórico completo validados |
+| EMR Serverless | Criação bloqueada pela habilitação da conta; não executado |
+| Substituição do backfill por Glue | Autorizada pelo proprietário e executada para preservar o plano FREE |
+| dbt gold: dimensões, fato e marts | Código integrado na main; testes offline aprovados |
+| Imagem Docker gold | Construída com sucesso no CI; publicação no ECR pendente |
+| ECR, Fargate, catálogo e workgroup gold | Terraform preparado, implantação desativada |
+| Step Functions ponta a ponta | Ainda não implementado/implantado |
+| SQS, SNS, alarmes e painel completos | Ainda pendentes como solução integrada |
+| Scheduler | Criado para bronze, desativado; falta conectar a orquestração final |
+| Evidências finais e custo real por serviço | Pendentes de consolidação |
+| Redshift Serverless | Opcional; não é requisito para concluir o escopo principal |
+
+O [CI do PR #15](https://github.com/AbnerRidigolo/b3-lakehouse-aws/actions/runs/38327864068) concluiu com sucesso, incluindo testes, dbt parse, build Linux da imagem e validação Terraform. O [workflow de infraestrutura](https://github.com/AbnerRidigolo/b3-lakehouse-aws/actions/runs/38327864072) também terminou com plan/apply bem-sucedidos. **Isso não significa que a gold foi implantada:** `ENABLE_GOLD` e `GOLD_IMAGE_DIGEST` estavam ausentes na última consulta às variáveis do repositório.
+
+## Arquitetura
+
+| Camada | Implementação e propósito |
+| --- | --- |
+| Bronze | Lambda Python → S3, com fontes originais, manifestos e controle de ingestão |
+| Silver | Glue PySpark → Iceberg/S3 + Glue Data Catalog; parsing, tipagem, deduplicação e MERGE |
+| Gold, preparada | dbt-Athena em ECS Fargate, com imagem ECR; dimensões, fato e marts Iceberg |
+| Orquestração, planejada | EventBridge Scheduler → Step Functions → bronze → silver → gold |
+| Confiabilidade, a concluir | DynamoDB, SQS, SNS e CloudWatch para controle, falhas e acompanhamento |
+| Plataforma | Terraform e GitHub Actions com OIDC, plan revisado e apply protegido |
+
+Fargate usará sub-rede pública com IP público apenas durante a tarefa, sem NAT Gateway ou serviço permanente. Step Functions foi escolhido para coordenar execuções sob demanda, evitando manter um ambiente MWAA cobrado por hora. O histórico foi executado com Glue após o bloqueio do EMR; a mudança foi explicitamente autorizada.
+
+## Fontes e contrato dos dados
+
+- **B3 COTAHIST:** registros de largura fixa de 245 bytes; escopo BDI `02` e mercado `010`. O layout oficial orienta o parser. [Implementação e validações silver](docs/phase-3.md).
+- **BCB SGS:** CDI, Selic e câmbio de venda; unidades originais preservadas, com lacunas registradas explicitamente.
+- Preços B3 **não são ajustados por proventos ou desdobramentos**. Moedas antigas e fatores de cotação não podem ser ignorados.
+- A gold preparada normaliza preço por fator de cotação, bloqueia comparações incompatíveis e sinaliza variações extremas como possíveis eventos, sem afirmar que são eventos confirmados.
+- Comparações com CDI exigem cobertura conforme o contrato documentado; ausências não são preenchidas com valores inventados. O calendário observado não substitui um calendário oficial de feriados bancários/da bolsa.
+
+Consulte a [semântica dos modelos gold e suas limitações](docs/phase-4.md).
+
+## Plano para terminar
+
+1. **Implantar e validar a gold.** Conferir acesso, plano FREE e gasto atualizado; aprovar a estimativa; implantar permissões e infraestrutura; publicar a imagem; executar uma tarefa dbt e conferir testes, contagens, consultas e custo real.
+2. **Concluir a orquestração e a confiabilidade.** Implementar Step Functions, controle de execução, retentativas limitadas, desvio de erro, SQS, SNS, alarmes e painel. Testar sucesso, repetição da mesma data, falha e recuperação. Manter o scheduler desligado até aprovação específica.
+3. **Encerrar com evidências reproduzíveis.** Atualizar diagramas e prints, registrar consultas reais e custos por serviço/tag, documentar operação, reprocessamento e encerramento. Não declarar o projeto concluído enquanto faltarem os testes ponta a ponta.
+
+A sequência operacional e os critérios de aceite estão em [CONTINUIDADE.md](docs/CONTINUIDADE.md). Não é necessário repetir o histórico nem recriar a infraestrutura já validada para avançar.
+
+## Custo e regras de operação
+
+- **Teto total: USD 10**, incluindo **USD 2 reservados** para atraso do faturamento e encerramento. Não é um teto mensal; créditos promocionais não anulam o consumo bruto.
+- O primeiro piloto gold tem [reserva proposta de USD 1](docs/costs/gold.md), **ainda sem autorização específica de execução**. O gasto real atualizado precisa ser consultado antes de liberar a etapa.
+- Budgets alerta, mas não bloqueia gastos. O workgroup gold preparado limita bytes por consulta, não o gasto agregado.
+- Aprovação antes de operações com custo e ao final de cada fase. Push exige autorização para cada commit; PR e merge são feitos pelo proprietário.
+- Preservar plano FREE; não habilitar Organizations/Identity Center nem converter o plano para contornar restrições.
+- Sem NAT Gateway, MWAA, clusters fixos ou RDS. Redshift somente se solicitado e aprovado separadamente.
+- Credenciais temporárias: OIDC no CI; acesso IAM/CloudShell para operação. Não solicitar, gravar ou publicar senhas, tokens ou chaves estáticas.
+- Não publicar como realizado aquilo que só está implementado ou simulado.
+
+## Estrutura do repositório
+
+```text
+infra/bootstrap/        Estado remoto, papéis CI e boundaries
+infra/modules/          Fundação e módulos bronze, silver, histórico e gold
+infra/environments/dev/ Composição e flags de implantação
+src/                    Ingestão e processamento Python/Spark
+dbt/                    Modelos gold, contratos e contêiner
+scripts/                Empacotamento, preparação, preflight e controle de custo
+tests/                  Testes offline
+.github/workflows/      CI, infraestrutura, OIDC e publicação manual de imagem
+docs/                   Evidências, decisões, custos e plano de conclusão
+local/                  Evidências brutas e ferramentas locais; ignorado pelo Git
+```
+
+## Validação local sem AWS
+
+Em um ambiente virtual Python 3.11:
 
 ```powershell
+python -m pip install -r scripts/requirements-ci.txt
+python -m pytest tests -q
 .\scripts\check-environment.ps1
 ```
 
-O script verifica ferramentas locais. Não acessa a AWS, não instala programas e não lê arquivos de credenciais.
+A instalação requer internet; os testes não chamam AWS nem fontes externas. O CI também valida dbt, constrói a imagem e executa testes Terraform com provider simulado. A suíte local registrada tem **48 testes e 24 subtestes**. Modelos SQL são exercitados com dados sintéticos em DuckDB após tradução de Trino; isso não substitui o piloto Athena/Iceberg real.
 
-Leia [o estado da Fase 0](docs/phase-0.md) antes de prosseguir.
+## Evidências e referências do projeto
 
-## Regras de execução
-
-- Região da fundação: `us-east-1`. Disponibilidade e custos dos serviços das próximas fases serão verificados antes da implantação.
-- Aprovação explícita antes de cada operação com custo e ao final de cada fase.
-- Push somente com autorização por commit; PR e merge realizados pelo proprietário.
-- Sem chaves estáticas AWS no código ou GitHub. Acesso local por `aws login` com credenciais temporárias e CI por OIDC. Identity Center e Organizations não serão habilitados para este projeto.
-- Sem NAT Gateway, MWAA, clusters fixos ou RDS.
-- Redshift Serverless opcional, desligado por padrão.
-- Testes automatizados offline, sem chamadas reais à AWS ou internet.
-- Publicar apenas evidências verificadas; separar planejamento, implantação e validação.
-
-## Fases
-
-0. Acesso temporário via IAM — validado.
-1. Fundação e CI/CD — bootstrap e budgets implantados; CI e OIDC validados; plan/apply e artifact criptografado validados.
-2. Ingestão bronze — implantada e validada com carga real e idempotência; Scheduler criado e desativado.
-3. Silver incremental — implantada e validada com carga e repetição MERGE no Glue/Iceberg. EMR bloqueado por habilitação da conta; histórico completo 1986–2025 executado e validado no Glue, preservando o incremental de 01/10/2026. Quarentena rastreável e lacunas do BCB explícitas.
-4. Gold com dbt — [código e infraestrutura preparados para revisão](docs/phase-4.md); testes locais concluídos, build da imagem e implantação AWS pendentes. Desativada por padrão.
-5. Orquestração e confiabilidade — pendente.
-6. Evidências, documentação e custos — pendente.
-7. Redshift opcional — pendente de decisão.
-
-
-## Fundação para revisão
-
-Consulte [Fase 1](docs/phase-1.md) e [estimativa inicial](docs/costs/foundation.md). Teto total: USD 10, com reserva de USD 2; não é teto mensal. Workflows habilitados, com revisão obrigatória nos environments de plan e apply.
-
-Consulte [as evidências de validação da fundação e consumo observado](docs/foundation-validation.md).
-
-A [fase 2](docs/phase-2.md) prepara Lambda, S3 bronze, DynamoDB e Scheduler. As flags de implantação e agendamento começam desativadas. Consulte [a estimativa da carga inicial](docs/costs/bronze.md) antes de autorizar recursos.
-
-Consulte [as evidências da primeira carga bronze real](docs/bronze-data-evidence.md).
-
-Consulte [a fase silver incremental](docs/phase-3.md), [a estimativa aprovada do piloto](docs/costs/silver.md) e [as evidências das duas execuções Glue](docs/silver-data-evidence.md). Silver habilitada no ambiente implantado, job sob demanda; defaults Terraform permanecem desativados para novos ambientes.
-
-Consulte [o piloto histórico 2025 para revisão](docs/history-2025.md) e [sua estimativa](docs/costs/history.md). Fontes anuais preparadas e validadas localmente; nenhum backfill EMR executado.
-
-[Backfill 2025 no Glue autorizado para preservar o plano FREE](docs/history-glue.md). Histórico 2025 executado e validado; [evidências reais](docs/history-glue-evidence.md).
+- [Fundação e consumo observado](docs/foundation-validation.md)
+- [Primeira carga bronze](docs/bronze-data-evidence.md)
+- [Silver incremental e repetição](docs/silver-data-evidence.md)
+- [Bloqueio do EMR](docs/emr-subscription-block.md) e [alternativa Glue autorizada](docs/history-glue.md)
+- [Histórico consolidado](docs/history-complete-evidence.md)
+- [Gold: modelos e implantação](docs/phase-4.md), [estimativa](docs/costs/gold.md) e [consultas ainda a executar](docs/gold-queries.sql)
+- **[Passagem para o próximo agente e plano de conclusão](docs/CONTINUIDADE.md)**
