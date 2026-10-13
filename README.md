@@ -45,7 +45,7 @@ Leia [o estado da Fase 0](docs/phase-0.md) antes de prosseguir.
 1. Fundação e CI/CD — bootstrap e budgets implantados; CI e OIDC validados; plan/apply e artifact criptografado validados.
 2. Ingestão bronze — implantada e validada com carga real e idempotência; Scheduler criado e desativado.
 3. Silver incremental — implantada e validada com carga e repetição MERGE no Glue/Iceberg. EMR bloqueado por habilitação da conta; histórico completo 1986–2025 executado e validado no Glue, preservando o incremental de 01/10/2026. Quarentena rastreável e lacunas do BCB explícitas.
-4. Gold com dbt — pendente.
+4. Gold com dbt — [código e infraestrutura preparados para revisão](docs/phase-4.md); testes locais concluídos, build da imagem e implantação AWS pendentes. Desativada por padrão.
 5. Orquestração e confiabilidade — pendente.
 6. Evidências, documentação e custos — pendente.
 7. Redshift opcional — pendente de decisão.

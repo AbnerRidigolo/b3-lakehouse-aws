@@ -1,0 +1,10 @@
+{"Version":"2012-10-17","Statement":[
+ {"Effect":"Allow","Action":"glue:GetDatabases","Resource":["arn:aws:glue:${region}:${account}:catalog","arn:aws:glue:${region}:${account}:database/b3_lakehouse_gold","arn:aws:glue:${region}:${account}:database/b3_lakehouse_silver"]},
+ {"Effect":"Allow","Action":["athena:StartQueryExecution","athena:GetQueryExecution","athena:GetQueryResults","athena:StopQueryExecution","athena:GetWorkGroup"],"Resource":"arn:aws:athena:${region}:${account}:workgroup/b3-lakehouse-aws-gold"},
+ {"Effect":"Allow","Action":["athena:GetDataCatalog"],"Resource":"arn:aws:athena:${region}:${account}:datacatalog/AwsDataCatalog"},
+ {"Effect":"Allow","Action":["glue:GetDatabase","glue:GetTable","glue:GetTables","glue:GetPartitions"],"Resource":["arn:aws:glue:${region}:${account}:catalog","arn:aws:glue:${region}:${account}:database/b3_lakehouse_silver","arn:aws:glue:${region}:${account}:table/b3_lakehouse_silver/b3_daily","arn:aws:glue:${region}:${account}:table/b3_lakehouse_silver/bcb_daily"]},
+ {"Effect":"Allow","Action":["glue:GetDatabase","glue:GetTable","glue:GetTables","glue:GetPartitions","glue:CreateTable","glue:UpdateTable","glue:DeleteTable"],"Resource":["arn:aws:glue:${region}:${account}:catalog","arn:aws:glue:${region}:${account}:database/b3_lakehouse_gold","arn:aws:glue:${region}:${account}:table/b3_lakehouse_gold/*"]},
+ {"Effect":"Allow","Action":["s3:GetBucketLocation","s3:ListBucket"],"Resource":["arn:aws:s3:::b3-lakehouse-aws-silver-${account}","arn:aws:s3:::b3-lakehouse-aws-gold-${account}"]},
+ {"Effect":"Allow","Action":"s3:GetObject","Resource":"arn:aws:s3:::b3-lakehouse-aws-silver-${account}/silver/*"},
+ {"Effect":"Allow","Action":["s3:GetObject","s3:PutObject","s3:DeleteObject","s3:AbortMultipartUpload","s3:ListMultipartUploadParts"],"Resource":["arn:aws:s3:::b3-lakehouse-aws-gold-${account}/gold/*","arn:aws:s3:::b3-lakehouse-aws-gold-${account}/athena-results/*"]}
+]}

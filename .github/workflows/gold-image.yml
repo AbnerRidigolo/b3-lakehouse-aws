@@ -1,0 +1,53 @@
+name: Reviewed gold image publication
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: 'Type PUBLISH gold image after cost approval'
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: gold-image-publication
+  cancel-in-progress: false
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/main' && inputs.confirmation == 'PUBLISH gold image' && vars.ENABLE_GOLD == 'true'
+    runs-on: ubuntu-latest
+    environment: aws-apply
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Build before AWS authentication
+        run: docker build --platform linux/amd64 -t gold-image dbt
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_APPLY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          role-duration-seconds: 900
+      - name: Publish immutable commit tag and report digest
+        env:
+          ACCOUNT: ${{ vars.AWS_ACCOUNT_ID }}
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(aws sts get-caller-identity --query Account --output text)" = "$ACCOUNT"
+          registry="$ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com"
+          repository=b3-lakehouse-aws-gold
+          existing=$(aws ecr describe-images --repository-name "$repository" --query "imageDetails[?contains(imageTags || \`[]\`, '$GITHUB_SHA')].imageDigest | [0]" --output text)
+          if [[ "$existing" == "None" ]]; then
+            aws ecr get-login-password | docker login --username AWS --password-stdin "$registry"
+            trap 'docker logout "$registry" >/dev/null 2>&1 || true' EXIT
+            docker tag gold-image "$registry/$repository:$GITHUB_SHA"
+            docker push "$registry/$repository:$GITHUB_SHA"
+          fi
+          digest=$(aws ecr describe-images --repository-name "$repository" --image-ids "imageTag=$GITHUB_SHA" --query 'imageDetails[0].imageDigest' --output text)
+          echo "Reviewed image digest: $digest" >> "$GITHUB_STEP_SUMMARY"
+          echo 'Set GOLD_IMAGE_DIGEST only after reviewing this image. This workflow does not run ECS tasks.' >> "$GITHUB_STEP_SUMMARY"
