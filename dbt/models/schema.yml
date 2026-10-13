@@ -1,0 +1,30 @@
+version: 2
+models:
+  - name: dim_asset
+    columns:
+      - name: asset_key
+        data_tests: [not_null, unique]
+  - name: dim_calendar
+    columns:
+      - name: trading_date
+        data_tests: [not_null, unique]
+  - name: dim_rates
+    columns:
+      - name: trading_date
+        data_tests: [not_null, unique]
+  - name: fct_daily_quotes
+    columns:
+      - name: asset_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_asset')
+                field: asset_key
+      - name: trading_date
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_calendar')
+                field: trading_date
+

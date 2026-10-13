@@ -1,0 +1,16 @@
+b3_gold:
+  target: aws
+  outputs:
+    aws:
+      type: athena
+      region_name: us-east-1
+      database: awsdatacatalog
+      schema: "{{ env_var('GOLD_DATABASE') }}"
+      s3_staging_dir: "{{ env_var('ATHENA_RESULTS_URI') }}"
+      s3_data_dir: "{{ env_var('GOLD_DATA_URI') }}"
+      s3_data_naming: table_unique
+      work_group: "{{ env_var('ATHENA_WORKGROUP') }}"
+      threads: 1
+      num_retries: 0
+      poll_interval: 2
+

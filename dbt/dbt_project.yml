@@ -1,0 +1,19 @@
+name: b3_gold
+version: '1.0.0'
+config-version: 2
+profile: b3_gold
+model-paths: [models]
+test-paths: [tests]
+macro-paths: [macros]
+clean-targets: [target, dbt_packages]
+flags:
+  send_anonymous_usage_stats: false
+models:
+  b3_gold:
+    +materialized: table
+    +table_type: iceberg
+    +format: parquet
+    +write_compression: snappy
+    staging:
+      +materialized: ephemeral
+

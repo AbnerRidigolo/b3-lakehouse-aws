@@ -1,0 +1,19 @@
+version: 2
+sources:
+  - name: silver
+    database: awsdatacatalog
+    schema: b3_lakehouse_silver
+    tables:
+      - name: b3_daily
+        columns:
+          - name: ticker
+            data_tests: [not_null]
+          - name: trading_date
+            data_tests: [not_null]
+      - name: bcb_daily
+        columns:
+          - name: trading_date
+            data_tests: [not_null]
+          - name: series
+            data_tests: [not_null]
+
