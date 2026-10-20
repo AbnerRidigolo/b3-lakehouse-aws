@@ -133,3 +133,7 @@ docs/                   Evidências, decisões, custos, operação e plano de co
 - [Primeira carga bronze](docs/bronze-data-evidence.md) · [Silver incremental e repetição](docs/silver-data-evidence.md)
 - [Histórico 2025](docs/history-2025.md) · [Lotes históricos](docs/history-batch-evidence.md) · [Histórico consolidado](docs/history-complete-evidence.md)
 - [Gold](docs/phase-4.md) · [Orquestração](docs/phase-5.md) · [Operação](docs/operacao.md) · [Plano de conclusão](docs/CONTINUIDADE.md)
+
+## Licença
+
+[MIT](LICENSE).
