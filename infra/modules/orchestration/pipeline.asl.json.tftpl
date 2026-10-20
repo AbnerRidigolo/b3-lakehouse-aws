@@ -1,0 +1,315 @@
+{
+  "Comment": "Daily bronze -> silver -> gold. One execution at a time, explicit date, no unbounded retries.",
+  "QueryLanguage": "JSONata",
+  "TimeoutSeconds": 3600,
+  "StartAt": "AcquireLock",
+  "States": {
+    "AcquireLock": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::dynamodb:updateItem",
+      "TimeoutSeconds": 30,
+      "Arguments": {
+        "TableName": "${table}",
+        "Key": {"pk": {"S": "pipeline#lock"}},
+        "UpdateExpression": "SET owner_id = :owner, lease_until = :lease, updated_at = :entered",
+        "ConditionExpression": "attribute_not_exists(lease_until) OR lease_until < :now",
+        "ExpressionAttributeValues": {
+          ":owner": {"S": "{% $states.context.Execution.Name %}"},
+          ":lease": {"N": "{% $string($floor($toMillis($states.context.State.EnteredTime) / 1000) + 3900) %}"},
+          ":now": {"N": "{% $string($floor($toMillis($states.context.State.EnteredTime) / 1000)) %}"},
+          ":entered": {"S": "{% $states.context.State.EnteredTime %}"}
+        }
+      },
+      "Assign": {
+        "request": "{% $states.input %}",
+        "force": "{% $states.input.force = true %}",
+        "reference_date": "{% $exists($states.input.reference_date) ? $states.input.reference_date : '' %}",
+        "outcome": "PUBLISHED",
+        "failed_step": "",
+        "error": ""
+      },
+      "Catch": [
+        {"ErrorEquals": ["DynamoDB.ConditionalCheckFailedException"], "Next": "PipelineBusy"}
+      ],
+      "Next": "Bronze"
+    },
+    "PipelineBusy": {
+      "Type": "Fail",
+      "Error": "PipelineBusy",
+      "Cause": "Another pipeline execution holds the lease."
+    },
+    "Bronze": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "TimeoutSeconds": 240,
+      "Arguments": {
+        "FunctionName": "${bronze_function_arn}",
+        "Payload": "{% $request %}"
+      },
+      "Retry": [
+        {"ErrorEquals": ["Lambda.ServiceException", "Lambda.AWSLambdaException", "Lambda.SdkClientException", "Lambda.TooManyRequestsException"], "IntervalSeconds": 10, "MaxAttempts": 2, "BackoffRate": 2},
+        {"ErrorEquals": ["URLError", "TimeoutError", "ConnectionResetError", "RemoteDisconnected", "IncompleteRead"], "IntervalSeconds": 300, "MaxAttempts": 1}
+      ],
+      "Assign": {
+        "reference_date": "{% $states.result.Payload.reference_date %}",
+        "bronze_status": "{% $states.result.Payload.status %}"
+      },
+      "Catch": [
+        {"ErrorEquals": ["SourceNotAvailable"], "Next": "SourceUnavailable"},
+        {"ErrorEquals": ["States.ALL"], "Next": "HandleFailure", "Assign": {"failed_step": "bronze", "error": "{% $states.errorOutput.Error %}"}}
+      ],
+      "Next": "ReadPipelineStatus"
+    },
+    "SourceUnavailable": {
+      "Type": "Pass",
+      "Comment": "Holiday or not yet published. Not an empty load; bronze keeps FAILED/SourceNotAvailable and may be retried later.",
+      "Assign": {"outcome": "SOURCE_UNAVAILABLE"},
+      "Next": "ReleaseLock"
+    },
+    "ReadPipelineStatus": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::dynamodb:getItem",
+      "TimeoutSeconds": 30,
+      "Arguments": {
+        "TableName": "${table}",
+        "Key": {"pk": {"S": "{% 'pipeline#' & $reference_date %}"}},
+        "ConsistentRead": true
+      },
+      "Assign": {
+        "published": "{% $states.result.Item.status.S = 'SUCCESS' %}"
+      },
+      "Catch": [
+        {"ErrorEquals": ["States.ALL"], "Next": "HandleFailure", "Assign": {"failed_step": "control", "error": "{% $states.errorOutput.Error %}"}}
+      ],
+      "Next": "AlreadyPublished"
+    },
+    "AlreadyPublished": {
+      "Type": "Choice",
+      "Choices": [
+        {"Condition": "{% $published and $not($force) %}", "Next": "SkipPublished"}
+      ],
+      "Default": "MarkRunning"
+    },
+    "SkipPublished": {
+      "Type": "Pass",
+      "Assign": {"outcome": "ALREADY_PUBLISHED"},
+      "Next": "ReleaseLock"
+    },
+    "MarkRunning": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::dynamodb:updateItem",
+      "TimeoutSeconds": 30,
+      "Arguments": {
+        "TableName": "${table}",
+        "Key": {"pk": {"S": "{% 'pipeline#' & $reference_date %}"}},
+        "UpdateExpression": "SET #s = :running, execution = :execution, started_at = :entered REMOVE failed_step, error_type, finished_at",
+        "ExpressionAttributeNames": {"#s": "status"},
+        "ExpressionAttributeValues": {
+          ":running": {"S": "RUNNING"},
+          ":execution": {"S": "{% $states.context.Execution.Name %}"},
+          ":entered": {"S": "{% $states.context.State.EnteredTime %}"}
+        }
+      },
+      "Catch": [
+        {"ErrorEquals": ["States.ALL"], "Next": "HandleFailure", "Assign": {"failed_step": "control", "error": "{% $states.errorOutput.Error %}"}}
+      ],
+      "Next": "ReadSilverStatus"
+    },
+    "ReadSilverStatus": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::dynamodb:getItem",
+      "TimeoutSeconds": 30,
+      "Arguments": {
+        "TableName": "${table}",
+        "Key": {"pk": {"S": "{% 'silver#' & $reference_date %}"}},
+        "ConsistentRead": true
+      },
+      "Assign": {
+        "silver_done": "{% $states.result.Item.status.S = 'SUCCESS' %}"
+      },
+      "Catch": [
+        {"ErrorEquals": ["States.ALL"], "Next": "HandleFailure", "Assign": {"failed_step": "control", "error": "{% $states.errorOutput.Error %}"}}
+      ],
+      "Next": "SilverNeeded"
+    },
+    "SilverNeeded": {
+      "Type": "Choice",
+      "Comment": "Resume after a gold failure without paying for the same silver MERGE again.",
+      "Choices": [
+        {"Condition": "{% $silver_done and $not($force) %}", "Next": "Gold"}
+      ],
+      "Default": "Silver"
+    },
+    "Silver": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::glue:startJobRun.sync",
+      "TimeoutSeconds": 1200,
+      "Arguments": {
+        "JobName": "${silver_job}",
+        "Arguments": {"--reference_date": "{% $reference_date %}"}
+      },
+      "Catch": [
+        {"ErrorEquals": ["States.ALL"], "Next": "HandleFailure", "Assign": {"failed_step": "silver", "error": "{% $states.errorOutput.Error %}"}}
+      ],
+      "Next": "Gold"
+    },
+    "Gold": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::ecs:runTask.sync",
+      "TimeoutSeconds": 1800,
+      "Arguments": {
+        "Cluster": "${gold_cluster_arn}",
+        "TaskDefinition": "${gold_task_definition_arn}",
+        "LaunchType": "FARGATE",
+        "NetworkConfiguration": {
+          "AwsvpcConfiguration": {
+            "Subnets": ${jsonencode(subnets)},
+            "SecurityGroups": ${jsonencode(security_groups)},
+            "AssignPublicIp": "ENABLED"
+          }
+        }
+      },
+      "Assign": {
+        "gold_task_arn": "{% $exists($states.result.TaskArn) ? $states.result.TaskArn : '' %}",
+        "gold_exit": "{% $exists($states.result.Containers[0].ExitCode) ? $states.result.Containers[0].ExitCode : -1 %}"
+      },
+      "Catch": [
+        {"ErrorEquals": ["States.ALL"], "Next": "HandleFailure", "Assign": {"failed_step": "gold", "error": "{% $states.errorOutput.Error %}"}}
+      ],
+      "Next": "GoldExitCode"
+    },
+    "GoldExitCode": {
+      "Type": "Choice",
+      "Comment": "Fail closed: a missing exit code is treated as failure.",
+      "Choices": [
+        {"Condition": "{% $gold_exit = 0 %}", "Next": "MarkSuccess"}
+      ],
+      "Default": "GoldFailed"
+    },
+    "GoldFailed": {
+      "Type": "Pass",
+      "Assign": {"failed_step": "gold", "error": "{% 'NonZeroExit.' & $string($gold_exit) %}"},
+      "Next": "HandleFailure"
+    },
+    "MarkSuccess": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::dynamodb:updateItem",
+      "TimeoutSeconds": 30,
+      "Arguments": {
+        "TableName": "${table}",
+        "Key": {"pk": {"S": "{% 'pipeline#' & $reference_date %}"}},
+        "UpdateExpression": "SET #s = :success, finished_at = :entered, gold_task_arn = :task",
+        "ConditionExpression": "execution = :execution",
+        "ExpressionAttributeNames": {"#s": "status"},
+        "ExpressionAttributeValues": {
+          ":success": {"S": "SUCCESS"},
+          ":execution": {"S": "{% $states.context.Execution.Name %}"},
+          ":entered": {"S": "{% $states.context.State.EnteredTime %}"},
+          ":task": {"S": "{% $gold_task_arn %}"}
+        }
+      },
+      "Catch": [
+        {"ErrorEquals": ["States.ALL"], "Next": "HandleFailure", "Assign": {"failed_step": "control", "error": "{% $states.errorOutput.Error %}"}}
+      ],
+      "Next": "PublishMarker"
+    },
+    "PublishMarker": {
+      "Type": "Task",
+      "Comment": "Consumers read pipeline#published to know the latest fully tested gold build. Never moves backwards.",
+      "Resource": "arn:aws:states:::dynamodb:updateItem",
+      "TimeoutSeconds": 30,
+      "Arguments": {
+        "TableName": "${table}",
+        "Key": {"pk": {"S": "pipeline#published"}},
+        "UpdateExpression": "SET reference_date = :date, execution = :execution, published_at = :entered",
+        "ConditionExpression": "attribute_not_exists(reference_date) OR reference_date <= :date",
+        "ExpressionAttributeValues": {
+          ":date": {"S": "{% $reference_date %}"},
+          ":execution": {"S": "{% $states.context.Execution.Name %}"},
+          ":entered": {"S": "{% $states.context.State.EnteredTime %}"}
+        }
+      },
+      "Catch": [
+        {"ErrorEquals": ["DynamoDB.ConditionalCheckFailedException"], "Next": "ReleaseLock"},
+        {"ErrorEquals": ["States.ALL"], "Next": "HandleFailure", "Assign": {"failed_step": "control", "error": "{% $states.errorOutput.Error %}"}}
+      ],
+      "Next": "ReleaseLock"
+    },
+    "ReleaseLock": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::dynamodb:updateItem",
+      "TimeoutSeconds": 30,
+      "Arguments": {
+        "TableName": "${table}",
+        "Key": {"pk": {"S": "pipeline#lock"}},
+        "UpdateExpression": "SET released_at = :entered REMOVE lease_until",
+        "ConditionExpression": "owner_id = :owner",
+        "ExpressionAttributeValues": {
+          ":owner": {"S": "{% $states.context.Execution.Name %}"},
+          ":entered": {"S": "{% $states.context.State.EnteredTime %}"}
+        }
+      },
+      "Catch": [
+        {"ErrorEquals": ["States.ALL"], "Next": "Done"}
+      ],
+      "Next": "Done"
+    },
+    "Done": {
+      "Type": "Succeed",
+      "Output": "{% {'status': $outcome, 'reference_date': $reference_date} %}"
+    },
+    "HandleFailure": {
+      "Type": "Choice",
+      "Choices": [
+        {"Condition": "{% $reference_date != '' %}", "Next": "MarkFailed"}
+      ],
+      "Default": "ReleaseLockAfterFailure"
+    },
+    "MarkFailed": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::dynamodb:updateItem",
+      "TimeoutSeconds": 30,
+      "Arguments": {
+        "TableName": "${table}",
+        "Key": {"pk": {"S": "{% 'pipeline#' & $reference_date %}"}},
+        "UpdateExpression": "SET #s = :failed, failed_step = :step, error_type = :error, execution = :execution, finished_at = :entered",
+        "ExpressionAttributeNames": {"#s": "status"},
+        "ExpressionAttributeValues": {
+          ":failed": {"S": "FAILED"},
+          ":step": {"S": "{% $failed_step %}"},
+          ":error": {"S": "{% $error = '' ? 'Unknown' : $error %}"},
+          ":execution": {"S": "{% $states.context.Execution.Name %}"},
+          ":entered": {"S": "{% $states.context.State.EnteredTime %}"}
+        }
+      },
+      "Catch": [
+        {"ErrorEquals": ["States.ALL"], "Next": "ReleaseLockAfterFailure"}
+      ],
+      "Next": "ReleaseLockAfterFailure"
+    },
+    "ReleaseLockAfterFailure": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::dynamodb:updateItem",
+      "TimeoutSeconds": 30,
+      "Arguments": {
+        "TableName": "${table}",
+        "Key": {"pk": {"S": "pipeline#lock"}},
+        "UpdateExpression": "SET released_at = :entered REMOVE lease_until",
+        "ConditionExpression": "owner_id = :owner",
+        "ExpressionAttributeValues": {
+          ":owner": {"S": "{% $states.context.Execution.Name %}"},
+          ":entered": {"S": "{% $states.context.State.EnteredTime %}"}
+        }
+      },
+      "Catch": [
+        {"ErrorEquals": ["States.ALL"], "Next": "PipelineFailed"}
+      ],
+      "Next": "PipelineFailed"
+    },
+    "PipelineFailed": {
+      "Type": "Fail",
+      "Error": "{% 'PipelineFailed.' & $failed_step %}",
+      "Cause": "{% $error = '' ? 'Unknown' : $error %}"
+    }
+  }
+}

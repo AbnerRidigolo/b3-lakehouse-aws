@@ -1,0 +1,10 @@
+{"Version":"2012-10-17","Statement":[
+ {"Effect":"Allow","Action":"lambda:InvokeFunction","Resource":["arn:aws:lambda:${region}:${account}:function:b3-lakehouse-aws-bronze","arn:aws:lambda:${region}:${account}:function:b3-lakehouse-aws-bronze:*"]},
+ {"Effect":"Allow","Action":["glue:StartJobRun","glue:GetJobRun","glue:GetJobRuns","glue:BatchStopJobRun"],"Resource":"arn:aws:glue:${region}:${account}:job/b3-lakehouse-aws-silver"},
+ {"Effect":"Allow","Action":"ecs:RunTask","Resource":"arn:aws:ecs:${region}:${account}:task-definition/b3-lakehouse-aws-gold:*","Condition":{"ArnEquals":{"ecs:cluster":"arn:aws:ecs:${region}:${account}:cluster/b3-lakehouse-aws-gold"}}},
+ {"Effect":"Allow","Action":["ecs:StopTask","ecs:DescribeTasks"],"Resource":"arn:aws:ecs:${region}:${account}:task/b3-lakehouse-aws-gold/*"},
+ {"Effect":"Allow","Action":"iam:PassRole","Resource":["arn:aws:iam::${account}:role/b3-lakehouse-aws-gold-task","arn:aws:iam::${account}:role/b3-lakehouse-aws-gold-execution"],"Condition":{"StringEquals":{"iam:PassedToService":"ecs-tasks.amazonaws.com"}}},
+ {"Effect":"Allow","Action":["events:PutTargets","events:PutRule","events:DescribeRule"],"Resource":"arn:aws:events:${region}:${account}:rule/StepFunctionsGetEventsForECSTaskRule"},
+ {"Effect":"Allow","Action":"dynamodb:UpdateItem","Resource":"arn:aws:dynamodb:${region}:${account}:table/b3-lakehouse-aws-bronze-runs","Condition":{"ForAllValues:StringLike":{"dynamodb:LeadingKeys":["pipeline#*"]}}},
+ {"Effect":"Allow","Action":"dynamodb:GetItem","Resource":"arn:aws:dynamodb:${region}:${account}:table/b3-lakehouse-aws-bronze-runs","Condition":{"ForAllValues:StringLike":{"dynamodb:LeadingKeys":["pipeline#*","silver#*"]}}}
+]}

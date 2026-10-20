@@ -7,7 +7,7 @@ Data de referência: 01/10/2026. Carga executada manualmente na Lambda b3-lakeho
 - Selic (SGS 11): JSON original de 42 bytes, uma observação.
 - Dólar venda (SGS 1): JSON original de 40 bytes, uma observação.
 
-Quatro objetos em bronze/source=.../reference_date=2026-10-01/, no bucket privado b3-lakehouse-aws-bronze-259081046223. Todos confirmaram AES256. Payloads foram recuperados para a pasta local ignorada, revalidados e seus hashes SHA-256 comparados com a resposta da Lambda e os metadados S3. Arquivos de dados não foram versionados.
+Quatro objetos em bronze/source=.../reference_date=2026-10-01/, no bucket privado b3-lakehouse-aws-bronze-<ACCOUNT_ID>. Todos confirmaram AES256. Payloads foram recuperados para a pasta local ignorada, revalidados e seus hashes SHA-256 comparados com a resposta da Lambda e os metadados S3. Arquivos de dados não foram versionados.
 
 Segunda invocação: ALREADY_SUCCESS. Listagens antes/depois confirmaram os mesmos quatro objetos, tamanhos, ETags e datas de modificação. Não houve nova coleta nem duplicação. Logs REPORT: primeira chamada faturou 4.692 ms e a segunda 114 ms, ambas com 512 MB (2,403 GB-s totais). Consumo de memória máximo observado: 113 MB.
 

@@ -39,9 +39,9 @@ O [CI 38327864068](https://github.com/AbnerRidigolo/b3-lakehouse-aws/actions/run
 ## 3. Acesso, ambiente e arquivos locais
 
 - Repositório: `https://github.com/AbnerRidigolo/b3-lakehouse-aws`.
-- Checkout usado: `C:/Users/Abner/OneDrive/Desktop/projetos-eng/b3-lakehouse-aws`.
-- Região: `us-east-1`. Conta esperada: `259081046223`, IAM `abner-admin`.
-- AWS CLI: `C:/Program Files/Amazon/AWSCLIV2/aws.exe`, perfil `b3-dev`. O wrapper `aws` do PATH apresentou problema; preferir o executável oficial.
+- Checkout usado: o clone local original do proprietário, no Windows (único com a pasta `local/`).
+- Região: `us-east-1`. Conta esperada: a do projeto (confirmar com `aws sts get-caller-identity`; o ID não é versionado), usuário IAM administrativo do proprietário.
+- AWS CLI: executável oficial da AWS CLI v2 no Windows, perfil `b3-dev`. O wrapper `aws` do PATH apresentou problema; preferir o executável oficial.
 - O fluxo `aws login` apresentou HTTP 400 na autorização OAuth, inclusive após novas tentativas. Login direto no console funcionou, e o usuário executou `aws sts get-caller-identity` no **CloudShell us-east-1**, confirmando a conta/identidade acima.
 - Login no console/CloudShell **não autentica automaticamente o CLI local**. Não insistir em URLs OAuth antigas nem transferir credenciais para arquivos. Reconfirmar a sessão temporária antes de operar.
 - Docker Desktop local não disponibilizou o engine Linux. O CI conseguiu construir a imagem; isso removeu a pendência de build, mas não publicou a imagem no ECR.
@@ -76,9 +76,9 @@ O agente em outra máquina deve usar as evidências resumidas versionadas e cole
 
 Recursos de referência para leituras, sem recriá-los:
 
-- S3 bronze: `b3-lakehouse-aws-bronze-259081046223`.
-- S3 silver: `b3-lakehouse-aws-silver-259081046223`.
-- Estado Terraform: `b3-lakehouse-aws-259081046223-state`, chave dev `dev/terraform.tfstate`.
+- S3 bronze: `b3-lakehouse-aws-bronze-<ACCOUNT_ID>`.
+- S3 silver: `b3-lakehouse-aws-silver-<ACCOUNT_ID>`.
+- Estado Terraform: `b3-lakehouse-aws-<ACCOUNT_ID>-state`, chave dev `dev/terraform.tfstate`.
 - DynamoDB: `b3-lakehouse-aws-bronze-runs`.
 - Glue Database: `b3_lakehouse_silver`, tabelas `b3_daily` e `bcb_daily`.
 
@@ -89,7 +89,7 @@ As estimativas de computação dos lotes não são o faturamento total. O lote 1
 ### A. Conferir acesso, custo e elegibilidade
 
 1. Confirmar branch/commit, árvore de trabalho e estado remoto antes de editar. Preservar alterações do usuário.
-2. No CloudShell, obter checkout do commit revisado e executar `python scripts/gold_preflight.py`. Conferir antes se boto3/botocore e a API `get_account_plan_state` estão disponíveis; se não estiverem, usar a CLI oficial ou dependências isoladas, sem registrar credenciais.
+2. No CloudShell, obter checkout do commit revisado e executar `EXPECTED_ACCOUNT=<ID da conta> python scripts/gold_preflight.py` (o script recusa conta diferente ou variável ausente). Conferir antes se boto3/botocore e a API `get_account_plan_state` estão disponíveis; se não estiverem, usar a CLI oficial ou dependências isoladas, sem registrar credenciais.
 3. O preflight consulta identidade, plano, budgets, service-linked role ECS, clusters e repositório ECR. Erros de permissão ou API não comprovam ausência de recurso. Uma listagem de ECS não comprova que o FREE permite executar Fargate.
 4. Obter gasto bruto atualizado, intervalo coberto e atraso de atualização. Os budgets da conta e do projeto podem cobrir o mesmo consumo; **não somá-los**. Preservar a tag Project e verificar sua ativação para alocação de custos, sem afirmar que já está ativa.
 5. Aplicar `scripts/cost_gate.py` com valores reais de gasto, pendências e estimativa. Reserva proposta: **USD 1** para publicação/infraestrutura/uma execução, detalhada em [costs/gold.md](costs/gold.md). A estimativa não é aprovação nem bloqueio automático de gasto.
@@ -126,6 +126,8 @@ As estimativas de computação dos lotes não são o faturamento total. O lote 1
 ## 6. Fase 5 — pipeline completo e confiabilidade
 
 Preparar código, testes offline e estimativa antes de pedir aprovação da implantação desta fase.
+
+**Preparado em 20/10/2026, ainda não implantado:** código, Terraform, testes offline e estimativa dos itens 1–7 estão descritos em [phase-5.md](phase-5.md), com [estimativa](costs/orchestration.md) e [comandos de operação](operacao.md). Faltam os pilotos reais (item 8), que dependem do aceite da fase 4 e de aprovação de custo.
 
 1. Implementar Step Functions para bronze → Glue incremental → ECS/dbt, com parâmetros de data explícitos e espera pela conclusão de cada etapa.
 2. Reusar contratos e controles existentes; não criar uma segunda implementação dos parsers. Registrar no DynamoDB etapa, referência, estado, contagens, falhas e resultado de qualidade; definir lease/concorrência e recuperação de execução interrompida.

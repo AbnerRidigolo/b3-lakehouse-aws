@@ -8,7 +8,7 @@ Lakehouse de cotações B3 (arquivos COTAHIST) e séries do Banco Central (SGS 1
 
 **Antes de agir, leia `docs/CONTINUIDADE.md`**: é o handoff oficial com ponto de parada, decisões encerradas, IDs de recursos, bloqueios de acesso e critérios de aceite das fases 4–6. O histórico 1986–2025 já está carregado — não recriar. Estados externos (AWS, variáveis do GitHub) devem ser reconsultados; evidências antigas não valem como leitura atual.
 
-Os dados preparados e evidências locais (`local/`, ignorado pelo Git, ~5 GB) existem apenas no checkout `C:/Users/Abner/OneDrive/Desktop/projetos-eng/b3-lakehouse-aws`, não em clones novos. Use o executável oficial `C:/Program Files/Amazon/AWSCLIV2/aws.exe` com perfil `b3-dev`; `aws login` local tem falhado (HTTP 400), e o acesso confiável tem sido o CloudShell.
+Os dados preparados e evidências locais (`local/`, ignorado pelo Git, ~5 GB) existem apenas no clone local original do proprietário (Windows), não em clones novos. Use o executável oficial da AWS CLI v2 com perfil `b3-dev`; `aws login` local tem falhado (HTTP 400), e o acesso confiável tem sido o CloudShell.
 
 ## Regras do projeto (do README)
 

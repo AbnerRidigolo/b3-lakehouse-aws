@@ -3,14 +3,16 @@
 Does not export credentials, run Athena queries, start jobs or create resources.
 """
 import json
+import os
 import boto3
 from botocore.exceptions import ClientError
 
 
 def main():
     session = boto3.Session(region_name='us-east-1')
+    expected = os.environ.get('EXPECTED_ACCOUNT', '')
     account = session.client('sts').get_caller_identity()['Account']
-    if account != '259081046223':
+    if not expected or account != expected:
         raise RuntimeError('Unexpected account; stopping')
     report = {'account': account, 'region': 'us-east-1'}
     for name, operation in {
