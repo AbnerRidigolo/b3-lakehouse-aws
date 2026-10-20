@@ -38,7 +38,7 @@ O processo dbt tem prazo de 20 minutos. Esse prazo não inclui pull/provisioname
 ## Sequência de implantação após revisão
 
 1. Concluído: commits publicados com autorização e integrados pelo proprietário no PR #15; CI e build Linux passaram. Para novas alterações, manter aprovação por commit e PR/merge pelo proprietário.
-2. No CloudShell autenticado, executar `python scripts/gold_preflight.py` no checkout revisado. Conferir plano FREE, budgets atualizados e existência de AWSServiceRoleForECS. Essa leitura não comprova elegibilidade de Fargate nem substitui o primeiro piloto.
+2. No CloudShell autenticado, executar `EXPECTED_ACCOUNT=<ID da conta> python scripts/gold_preflight.py` no checkout revisado. Conferir plano FREE, budgets atualizados e existência de AWSServiceRoleForECS. Essa leitura não comprova elegibilidade de Fargate nem substitui o primeiro piloto.
 3. Conferir o teto total com `scripts/cost_gate.py`, incluindo consumo ainda não faturado e reserva de USD 2. Aprovar a [estimativa](costs/gold.md) antes de qualquer apply/publicação/execução.
 4. Revisar e aplicar bootstrap com `enable_gold_permissions=true`. Criar o service-linked role somente se estiver ausente, usando `create_ecs_service_role=true`; preservar configurações anteriores.
 5. Habilitar `ENABLE_GOLD=true`, inicialmente sem `GOLD_IMAGE_DIGEST`. Revisar/aplicar o plano de infraestrutura pelo fluxo existente.
