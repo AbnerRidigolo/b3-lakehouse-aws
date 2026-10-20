@@ -3,7 +3,9 @@ import io
 import json
 import zipfile
 import pytest
-from src.bronze.handler import date_windows, ingest, validate_b3, validate_bcb
+from urllib.error import HTTPError
+from src.bronze import handler
+from src.bronze.handler import SourceNotAvailable, date_windows, ingest, validate_b3, validate_bcb
 
 DAY = date(2026, 10, 1)
 
@@ -114,3 +116,24 @@ def test_partial_failure_retry_resumes_and_success_skips_all_downloads():
     before = len(calls)
     assert ingest(DAY, s3, runs, 'bucket', download, lambda: 1002)['status'] == 'ALREADY_SUCCESS'
     assert len(calls) == before
+
+
+def test_unpublished_source_is_explicit_and_not_an_empty_load(monkeypatch):
+    with pytest.raises(SourceNotAvailable):
+        validate_bcb(b"[]", DAY)
+    def not_found(request, timeout):
+        raise HTTPError(request.full_url, 404, "Not Found", {}, None)
+    monkeypatch.setattr(handler, "urlopen", not_found)
+    with pytest.raises(SourceNotAvailable):
+        handler.fetch("https://example.invalid/COTAHIST_D01102026.ZIP")
+    def server_error(request, timeout):
+        raise HTTPError(request.full_url, 503, "Unavailable", {}, None)
+    monkeypatch.setattr(handler, "urlopen", server_error)
+    with pytest.raises(HTTPError):
+        handler.fetch("https://example.invalid/COTAHIST_D01102026.ZIP")
+    s3, runs = Storage(), Runs()
+    def holiday(url):
+        raise SourceNotAvailable("not published")
+    with pytest.raises(SourceNotAvailable):
+        ingest(DAY, s3, runs, "bucket", holiday, lambda: 1000)
+    assert runs.item["status"] == "FAILED" and not s3.objects

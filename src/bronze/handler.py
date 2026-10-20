@@ -6,6 +6,7 @@ import io
 import json
 import os
 import time
+from urllib.error import HTTPError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 from zoneinfo import ZoneInfo
@@ -14,6 +15,13 @@ import zipfile
 SERIES = {"cdi": 12, "selic": 11, "usd_brl_sell": 1}
 DOWNLOAD_LIMIT = 32 * 1024 * 1024
 EXPANDED_LIMIT = 128 * 1024 * 1024
+
+
+class SourceNotAvailable(ValueError):
+    """No file or observation published for the date: holiday or not yet released.
+
+    Kept distinct from contract errors so orchestration never records it as an empty load.
+    """
 
 
 def date_windows(start, end):
@@ -47,10 +55,15 @@ def source_urls(target):
 
 def fetch(url):
     request = Request(url, headers={"User-Agent": "b3-lakehouse-aws/0.1"})
-    with urlopen(request, timeout=20) as response:
-        if response.geturl().split(":", 1)[0] != "https":
-            raise ValueError("Insecure source redirect")
-        payload = response.read(DOWNLOAD_LIMIT + 1)
+    try:
+        with urlopen(request, timeout=20) as response:
+            if response.geturl().split(":", 1)[0] != "https":
+                raise ValueError("Insecure source redirect")
+            payload = response.read(DOWNLOAD_LIMIT + 1)
+    except HTTPError as exc:
+        if exc.code == 404:
+            raise SourceNotAvailable("Source not published for the reference date") from exc
+        raise
     if len(payload) > DOWNLOAD_LIMIT:
         raise ValueError("Download size limit exceeded")
     return payload
@@ -88,6 +101,8 @@ def validate_b3(payload, target):
 
 def validate_bcb(payload, target):
     rows = json.loads(payload)
+    if rows == []:
+        raise SourceNotAvailable("No BCB observation published for the reference date")
     if not isinstance(rows, list) or len(rows) != 1:
         raise ValueError("Expected one BCB observation for the reference date")
     row = rows[0]
