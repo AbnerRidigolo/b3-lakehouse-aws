@@ -24,6 +24,26 @@ O [CI 38327864068](https://github.com/AbnerRidigolo/b3-lakehouse-aws/actions/run
 
 **Próxima ação concreta:** consultar preflight/custos no CloudShell, revisar a reserva do piloto gold e obter autorização específica antes de implantar ou executar. Não há autorização nova de custo implícita neste documento.
 
+### Leitura de 20/10/2026 (somente APIs de controle, sem custo de processamento)
+
+Feita com a identidade administrativa do proprietário em us-east-1; Cost Explorer não foi consultado (cobra por requisição).
+
+| Item | Observado |
+| --- | --- |
+| Plano da conta | FREE, ACTIVE, expira em 02/12/2026; créditos restantes USD 131,02 (não descontados do teto) |
+| Budget da conta (sem créditos, período 30/09–01/12) | gasto real USD 2,656; previsão USD 4,886; atualizado 20/10 12:53 UTC |
+| Budget da tag Project | gasto real USD 1,622 (subconjunto do anterior; não somar) |
+| `cost_gate.py --spent 2.656 --pending 0.10 --estimate 1.00` | dentro do teto; USD 4,24 restantes fora da reserva |
+| Bootstrap gold | policies `gold-ci-*`, `gold-network-ci-*` e boundaries `gold-task`/`gold-execution` criadas em 13/10 e anexadas às roles OIDC; permissões de orquestração **não** aplicadas |
+| `AWSServiceRoleForECS` | existe (não usar `create_ecs_service_role`) |
+| Recursos gold/orquestração | nenhum: sem repositório ECR, cluster ECS, máquina de estados, SNS/SQS, alarmes ou painel; workgroup Athena só `primary` |
+| Rede e serviços proibidos | sem NAT Gateway nem EIP; apenas a VPC padrão; EMR Serverless e Redshift Serverless retornam `SubscriptionRequiredException` |
+| Bronze/silver | Lambda e schedule `b3-lakehouse-aws-bronze` (DISABLED); tabelas Iceberg `b3_daily`/`bcb_daily` atualizadas pela última vez em 09/10; último job histórico 2024 SUCCEEDED |
+| `pipeline#published` no DynamoDB | ausente (nenhuma publicação orquestrada) |
+| Variáveis GitHub (via log do plan) | `ENABLE_GOLD=true`, `GOLD_IMAGE_DIGEST` vazio, `ENABLE_ORCHESTRATION=false`, agendamentos false |
+
+Plano do [PR #18](https://github.com/AbnerRidigolo/b3-lakehouse-aws/pull/18) ([run 39500538813](https://github.com/AbnerRidigolo/b3-lakehouse-aws/actions/runs/39500538813)): **21 a adicionar, 2 a alterar, 0 a destruir** — infraestrutura gold sem task definition (bucket, catálogo, workgroup, ECR, VPC/sub-rede/IGW sem NAT, cluster, roles, log group) mais o novo código da Lambda bronze e do `silver-libs.zip`. O run do merge em main ([39500553229](https://github.com/AbnerRidigolo/b3-lakehouse-aws/actions/runs/39500553229)) aguarda aprovação de `aws-plan`; o apply exigirá depois a aprovação de `aws-apply`.
+
 ## 2. Regras do proprietário que continuam válidas
 
 - Teto **total de USD 10**, com **USD 2 de reserva**; considerar consumo bruto e atraso do faturamento. Nunca descontar créditos para aparentar custo zero.
