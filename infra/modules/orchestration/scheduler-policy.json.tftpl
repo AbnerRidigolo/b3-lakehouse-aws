@@ -1,0 +1,4 @@
+{"Version":"2012-10-17","Statement":[
+ {"Effect":"Allow","Action":"states:StartExecution","Resource":"arn:aws:states:${region}:${account}:stateMachine:b3-lakehouse-aws-pipeline"},
+ {"Effect":"Allow","Action":"sqs:SendMessage","Resource":"arn:aws:sqs:${region}:${account}:b3-lakehouse-aws-pipeline-dlq"}
+]}

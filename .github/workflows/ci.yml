@@ -45,7 +45,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for dir in infra/bootstrap infra/modules/budget infra/modules/bronze infra/modules/silver infra/modules/history infra/modules/history-glue infra/modules/gold infra/environments/dev; do
+          for dir in infra/bootstrap infra/modules/budget infra/modules/bronze infra/modules/silver infra/modules/history infra/modules/history-glue infra/modules/gold infra/modules/orchestration infra/environments/dev; do
             terraform -chdir="$dir" init -backend=false -input=false -lockfile=readonly
             terraform -chdir="$dir" validate
           done
@@ -56,3 +56,4 @@ jobs:
           terraform -chdir=infra/modules/history test
           terraform -chdir=infra/modules/history-glue test
           terraform -chdir=infra/modules/gold test
+          terraform -chdir=infra/modules/orchestration test
