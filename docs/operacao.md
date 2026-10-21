@@ -97,7 +97,7 @@ aws athena stop-query-execution --query-execution-id <id>
 
 Parar a execução do Step Functions encerra a tarefa ECS e o job Glue em andamento (integrações `.sync`), mas confira sempre se não restou tarefa, job ou consulta ativa. O lease é liberado pela própria execução ou expira em 65 minutos.
 
-Agendamento: manter `ORCHESTRATION_SCHEDULE_ENABLED=false` (e `BRONZE_SCHEDULE_ENABLED=false`). Para desligar um agendamento aprovado, altere a variável **e** aplique um plano revisado — mudar a variável sozinha não dispara workflow.
+Agendamento: manter `ORCHESTRATION_SCHEDULE_ENABLED=false` (e `BRONZE_SCHEDULE_ENABLED=false`). Para desligar um agendamento aprovado, altere a variável **e** dispare `Reviewed infrastructure` na main com operação `apply` e confirmação `APPLY b3-lakehouse-aws`, revisando o plano antes de aprovar `aws-apply` — mudar a variável sozinha não dispara workflow.
 
 ## Encerramento
 

@@ -10,10 +10,10 @@ on:
     inputs:
       operation:
         type: choice
-        options: [plan, destroy]
+        options: [plan, apply, destroy]
         default: plan
       confirmation:
-        description: 'For destruction type DESTROY b3-lakehouse-aws'
+        description: 'For apply type APPLY b3-lakehouse-aws; for destruction type DESTROY b3-lakehouse-aws'
         type: string
 permissions:
   contents: read
@@ -121,6 +121,7 @@ jobs:
     if: >-
       github.ref == 'refs/heads/main' &&
       (github.event_name == 'push' ||
+      (github.event_name == 'workflow_dispatch' && inputs.operation == 'apply' && inputs.confirmation == 'APPLY b3-lakehouse-aws') ||
       (github.event_name == 'workflow_dispatch' && inputs.operation == 'destroy' && inputs.confirmation == 'DESTROY b3-lakehouse-aws'))
     environment: aws-apply
     runs-on: ubuntu-latest
