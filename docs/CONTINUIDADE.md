@@ -1,6 +1,6 @@
 # Continuidade e plano de conclusão
 
-Referência: **12/10/2026**. Este documento permite continuar o projeto sem depender do histórico da conversa. Revalidar estados externos antes de agir; evidências antigas não equivalem a uma consulta atual.
+Referência: **21/10/2026**. Este documento permite continuar o projeto sem depender do histórico da conversa. Revalidar estados externos antes de agir; evidências antigas não equivalem a uma consulta atual.
 
 ## 1. Objetivo e ponto de parada
 
@@ -18,11 +18,14 @@ O [CI 38327864068](https://github.com/AbnerRidigolo/b3-lakehouse-aws/actions/run
 
 | Variável | Valor observado | Consequência |
 | --- | --- | --- |
-| ENABLE_GOLD | Ausente | Terraform recebe false |
-| GOLD_IMAGE_DIGEST | Ausente | Não há digest revisado configurado |
-| BRONZE_SCHEDULE_ENABLED | false | Agendamento automático desligado |
+| ENABLE_GOLD | true (21/10) | Infraestrutura gold implantada |
+| GOLD_IMAGE_DIGEST | `sha256:d357906c…54fbac` (21/10) | Task definition `b3-lakehouse-aws-gold:2` fixa a imagem revisada |
+| ENABLE_ORCHESTRATION | false | Fase 5 não implantada |
+| BRONZE_SCHEDULE_ENABLED / ORCHESTRATION_SCHEDULE_ENABLED | false | Agendamento automático desligado |
 
-**Próxima ação concreta:** consultar preflight/custos no CloudShell, revisar a reserva do piloto gold e obter autorização específica antes de implantar ou executar. Não há autorização nova de custo implícita neste documento.
+**Ponto de parada em 21/10/2026:** fase 4 concluída na AWS. Gold implantada (PRs #19 e #20 corrigiram duas permissões do bootstrap, já aplicadas pelo proprietário), piloto Fargate com exit 0, 25/25 modelos e testes, reconciliação silver = gold e consultas de aceite registradas em [gold-evidence.md](gold-evidence.md). Custo estimado do piloto abaixo de USD 0,01, mais armazenamento.
+
+**Próxima ação concreta:** preparar os pilotos da fase 5 (seção 6): revisar o bootstrap com `enable_orchestration_permissions=true`, o plano com `ENABLE_ORCHESTRATION=true` e a [estimativa](costs/orchestration.md), reler o gasto bruto e obter autorização específica. Não há autorização nova de custo implícita neste documento.
 
 ### Leitura de 20/10/2026 (somente APIs de controle, sem custo de processamento)
 
@@ -133,13 +136,13 @@ As estimativas de computação dos lotes não são o faturamento total. O lote 1
 
 ### D. Aceite da fase 4
 
-- [ ] Tarefa real termina com exit code 0; contratos de origem e `dbt build` passam.
-- [ ] Seis tabelas gold Iceberg existem e são consultáveis no workgroup dedicado.
-- [ ] Fato e mart diário reconciliam com a silver; dimensões e chaves passam nos testes.
-- [ ] Amostras demonstram moedas históricas, lacunas, quarentena na origem e eventos suspeitos tratados corretamente.
-- [ ] Consultas de `docs/gold-queries.sql` executadas, com resultados e bytes registrados.
-- [ ] Não restam tarefas/consultas do piloto em execução; gasto e armazenamento remanescente documentados.
-- [ ] README atualizado com evidências reais, incluindo limitações ou falhas encontradas.
+- [x] Tarefa real termina com exit code 0; contratos de origem e `dbt build` passam.
+- [x] Seis tabelas gold Iceberg existem e são consultáveis no workgroup dedicado.
+- [x] Fato e mart diário reconciliam com a silver; dimensões e chaves passam nos testes.
+- [x] Amostras demonstram moedas históricas, lacunas, quarentena na origem e eventos suspeitos tratados corretamente.
+- [x] Consultas de `docs/gold-queries.sql` executadas, com resultados e bytes registrados.
+- [x] Não restam tarefas/consultas do piloto em execução; gasto e armazenamento remanescente documentados.
+- [x] README atualizado com evidências reais, incluindo limitações ou falhas encontradas.
 
 **Cuidados de implementação:** dbt reconstrói seis modelos sem partição para evitar o limite de 100 partições CTAS em 40 anos. O build não é atômico entre tabelas: falhas podem deixar resultados parciais. Não publicar sucesso sem todos os testes. Não executar gold simultaneamente com outra gold ou escrita silver sem coordenação. Consulte [phase-4.md](phase-4.md) para a semântica de retornos e limitações do calendário.
 
@@ -194,4 +197,4 @@ Em clone novo, instalar dependências em ambiente isolado e seguir `.github/work
 
 ## 9. Texto para iniciar a próxima conversa
 
-> Continue o projeto b3-lakehouse-aws a partir de README.md e docs/CONTINUIDADE.md. Bronze/silver e histórico 1986–2025 já estão carregados; não os recrie. A gold está integrada e validada no CI, mas desativada e ainda não executada na AWS. Comece verificando o estado atual do GitHub, o acesso temporário via CloudShell e o consumo real. Prepare e revise o piloto gold antes de pedir autorização de custo. Preserve o plano FREE e o teto total de USD 10, incluindo USD 2 de reserva. Cada push precisa de autorização por commit; eu abro e integro os PRs. Conclua depois a orquestração, confiabilidade e evidências, respeitando as aprovações de fase. Não solicite ou registre credenciais e não trate este texto como autorização de gasto, push ou ativação de agendamento.
+> Continue o projeto b3-lakehouse-aws a partir de README.md e docs/CONTINUIDADE.md. Bronze/silver e histórico 1986–2025 já estão carregados; não os recrie. A gold está implantada e validada na AWS (docs/gold-evidence.md); a orquestração está preparada, mas não implantada. Comece verificando o estado atual do GitHub, o acesso temporário via CloudShell e o consumo real. Prepare e revise os pilotos da orquestração antes de pedir autorização de custo. Preserve o plano FREE e o teto total de USD 10, incluindo USD 2 de reserva. Cada push precisa de autorização por commit; eu abro e integro os PRs. Conclua depois a orquestração, confiabilidade e evidências, respeitando as aprovações de fase. Não solicite ou registre credenciais e não trate este texto como autorização de gasto, push ou ativação de agendamento.
