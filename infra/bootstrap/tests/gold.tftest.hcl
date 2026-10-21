@@ -27,4 +27,9 @@ run "gold_permissions_do_not_start_compute" {
     condition     = anytrue([for s in jsondecode(aws_iam_policy.gold_network_ci["apply"].policy).Statement : contains(try(tolist(s.Action), [s.Action]), "ec2:CreateSubnet") && s.Resource == "arn:aws:ec2:us-east-1:123456789012:vpc/*" && try(s.Condition.StringEquals["aws:ResourceTag/Project"], "") == "b3-lakehouse-aws"])
     error_message = "Creating subnets, route tables and security groups needs the tagged parent VPC authorized."
   }
+  assert {
+    condition = alltrue([for role, action in { plan = "ecs:DescribeTaskDefinition", apply = "ecs:DeregisterTaskDefinition" } :
+    anytrue([for s in jsondecode(aws_iam_policy.gold_ci[role].policy).Statement : s.Action == action && s.Resource == "*"])])
+    error_message = "Task definition describe/deregister support no resource-level permissions and need Resource *."
+  }
 }

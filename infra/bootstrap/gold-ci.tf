@@ -29,7 +29,9 @@ resource "aws_iam_policy" "gold_ci" {
     { Effect = "Allow", Action = ["glue:GetDatabase", "glue:GetTags"], Resource = local.gold_catalog },
     { Effect = "Allow", Action = "logs:DescribeLogGroups", Resource = "*" },
     { Effect = "Allow", Action = "logs:ListTagsForResource", Resource = local.gold_logs },
-    { Effect = "Allow", Action = ["ecs:DescribeClusters", "ecs:DescribeTaskDefinition", "ecs:ListTagsForResource"], Resource = local.gold_ecs }
+    { Effect = "Allow", Action = ["ecs:DescribeClusters", "ecs:ListTagsForResource"], Resource = local.gold_ecs },
+    # DescribeTaskDefinition and DeregisterTaskDefinition support no resource-level permissions.
+    { Effect = "Allow", Action = "ecs:DescribeTaskDefinition", Resource = "*" }
     ], [for statement in [
       { Effect = "Allow", Action = ["s3:CreateBucket", "s3:DeleteBucket", "s3:PutBucketTagging", "s3:PutBucketPolicy", "s3:DeleteBucketPolicy", "s3:PutBucketPublicAccessBlock", "s3:PutEncryptionConfiguration", "s3:PutLifecycleConfiguration"], Resource = local.gold_bucket },
       { Effect = "Allow", Action = ["iam:CreateRole", "iam:PutRolePermissionsBoundary"], Resource = local.gold_roles, Condition = { StringEquals = { "iam:PermissionsBoundary" = [for p in aws_iam_policy.gold_boundary : p.arn] } } },
@@ -40,7 +42,8 @@ resource "aws_iam_policy" "gold_ci" {
       { Effect = "Allow", Action = ["athena:CreateWorkGroup", "athena:UpdateWorkGroup", "athena:DeleteWorkGroup", "athena:TagResource", "athena:UntagResource"], Resource = local.gold_workgroup },
       { Effect = "Allow", Action = ["glue:CreateDatabase", "glue:UpdateDatabase", "glue:DeleteDatabase", "glue:TagResource", "glue:UntagResource"], Resource = local.gold_catalog },
       { Effect = "Allow", Action = ["logs:CreateLogGroup", "logs:DeleteLogGroup", "logs:PutRetentionPolicy", "logs:DeleteRetentionPolicy", "logs:TagResource", "logs:UntagResource"], Resource = "${local.gold_logs}:*" },
-      { Effect = "Allow", Action = ["ecs:CreateCluster", "ecs:DeleteCluster", "ecs:UpdateCluster", "ecs:UpdateClusterSettings", "ecs:TagResource", "ecs:UntagResource", "ecs:DeregisterTaskDefinition"], Resource = local.gold_ecs },
+      { Effect = "Allow", Action = ["ecs:CreateCluster", "ecs:DeleteCluster", "ecs:UpdateCluster", "ecs:UpdateClusterSettings", "ecs:TagResource", "ecs:UntagResource"], Resource = local.gold_ecs },
+      { Effect = "Allow", Action = "ecs:DeregisterTaskDefinition", Resource = "*" },
       { Effect = "Allow", Action = "ecs:RegisterTaskDefinition", Resource = "*", Condition = { StringEquals = { "aws:RequestTag/Project" = local.project } } }
   ] : statement if each.key == "apply"]) })
 }
