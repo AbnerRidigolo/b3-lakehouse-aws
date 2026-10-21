@@ -122,7 +122,7 @@ As estimativas de computação dos lotes não são o faturamento total. O lote 1
 1. Após aprovação de custo, revisar bootstrap com `enable_gold_permissions=true`; preservar todas as flags existentes. Não substituir tfvars reais por exemplos.
 2. Confirmar se `AWSServiceRoleForECS` existe. Usar `create_ecs_service_role=true` somente se realmente ausente; não tentar duplicá-lo. Revisar o plano antes de aplicar.
 3. Habilitar `ENABLE_GOLD=true`, inicialmente sem digest. Revisar o plano para bucket, catálogo, workgroup, ECR, rede, cluster e roles; nenhuma remoção de bronze/silver é esperada.
-4. O workflow `infrastructure.yml` aplica em push na main; `workflow_dispatch` com operação plan **não aplica**. Alterar uma variável do GitHub tampouco dispara workflow automaticamente. Preparar uma mudança revisada em main ou aplicar explicitamente o plano revisado pelo operador. Evitar commits vazios e ciclos de aprovação sem mudança concreta.
+4. O workflow `infrastructure.yml` aplica em push na main ou por `workflow_dispatch` na main com operação `apply` e confirmação `APPLY b3-lakehouse-aws`, sempre com aprovação `aws-apply`; a operação `plan` **não aplica**. Alterar uma variável do GitHub não dispara workflow: depois de mudá-la, disparar `apply` manualmente e revisar o plano antes de aprovar. Evitar commits vazios.
 5. Se o plano incluir mudanças inesperadas ou o FREE bloquear um serviço, interromper a implantação e esclarecer a causa. Não remover boundaries nem ampliar permissões indiscriminadamente.
 
 ### C. Publicar e executar o contêiner
