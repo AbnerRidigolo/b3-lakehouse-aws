@@ -23,4 +23,18 @@ run "orchestration_ci_cannot_start_executions" {
     condition     = !strcontains(aws_iam_policy.pipeline_boundary["sfn"].policy, "iam:Create") && !strcontains(aws_iam_policy.pipeline_boundary["scheduler"].policy, "lambda:") && strcontains(aws_iam_policy.pipeline_boundary["scheduler"].policy, "states:StartExecution")
     error_message = "Runtime boundaries stay scoped: the scheduler only starts the pipeline."
   }
+  assert {
+    condition = alltrue([for role in ["plan", "apply"] : anytrue([for s in jsondecode(aws_iam_policy.pipeline_ci[role].policy).Statement :
+    s.Resource == "*" && contains(try(tolist(s.Action), [s.Action]), "states:ValidateStateMachineDefinition") && contains(try(tolist(s.Action), [s.Action]), "sns:GetSubscriptionAttributes")])])
+    error_message = "Plan validates the definition and reads the subscription; both need Resource * (no resource-level support)."
+  }
+  assert {
+    condition = anytrue([for s in jsondecode(aws_iam_policy.pipeline_ci["apply"].policy).Statement :
+    s.Resource == "*" && contains(try(tolist(s.Action), [s.Action]), "sns:Unsubscribe") && contains(try(tolist(s.Action), [s.Action]), "sns:SetSubscriptionAttributes")])
+    error_message = "Subscription updates and removal support no resource-level permissions."
+  }
+  assert {
+    condition     = strcontains(aws_iam_policy.pipeline_ci["plan"].policy, "iam:ListInstanceProfilesForRole")
+    error_message = "Role deletion lists instance profiles first; without it teardown fails."
+  }
 }
