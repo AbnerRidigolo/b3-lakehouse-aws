@@ -23,4 +23,8 @@ run "gold_permissions_do_not_start_compute" {
     condition     = !strcontains(aws_iam_policy.gold_network_ci["apply"].policy, "CreateNatGateway") && !strcontains(aws_iam_policy.gold_network_ci["apply"].policy, "RunInstances")
     error_message = "No NAT or fixed compute permissions."
   }
+  assert {
+    condition     = anytrue([for s in jsondecode(aws_iam_policy.gold_network_ci["apply"].policy).Statement : contains(try(tolist(s.Action), [s.Action]), "ec2:CreateSubnet") && s.Resource == "arn:aws:ec2:us-east-1:123456789012:vpc/*" && try(s.Condition.StringEquals["aws:ResourceTag/Project"], "") == "b3-lakehouse-aws"])
+    error_message = "Creating subnets, route tables and security groups needs the tagged parent VPC authorized."
+  }
 }
