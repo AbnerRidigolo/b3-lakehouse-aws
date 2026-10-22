@@ -1,6 +1,6 @@
 # Continuidade e plano de conclusão
 
-Referência: **21/10/2026**. Este documento permite continuar o projeto sem depender do histórico da conversa. Revalidar estados externos antes de agir; evidências antigas não equivalem a uma consulta atual.
+Referência: **22/10/2026**. Este documento permite continuar o projeto sem depender do histórico da conversa. Revalidar estados externos antes de agir; evidências antigas não equivalem a uma consulta atual.
 
 ## 1. Objetivo e ponto de parada
 
@@ -20,12 +20,14 @@ O [CI 38327864068](https://github.com/AbnerRidigolo/b3-lakehouse-aws/actions/run
 | --- | --- | --- |
 | ENABLE_GOLD | true (21/10) | Infraestrutura gold implantada |
 | GOLD_IMAGE_DIGEST | `sha256:d357906c…54fbac` (21/10) | Task definition `b3-lakehouse-aws-gold:2` fixa a imagem revisada |
-| ENABLE_ORCHESTRATION | false | Fase 5 não implantada |
+| ENABLE_ORCHESTRATION | true (21/10) | Orquestração implantada; agendamento DISABLED |
 | BRONZE_SCHEDULE_ENABLED / ORCHESTRATION_SCHEDULE_ENABLED | false | Agendamento automático desligado |
 
 **Ponto de parada em 21/10/2026:** fase 4 concluída na AWS. Gold implantada (PRs #19 e #20 corrigiram duas permissões do bootstrap, já aplicadas pelo proprietário), piloto Fargate com exit 0, 25/25 modelos e testes, reconciliação silver = gold e consultas de aceite registradas em [gold-evidence.md](gold-evidence.md). Custo estimado do piloto abaixo de USD 0,01, mais armazenamento.
 
-**Próxima ação concreta:** preparar os pilotos da fase 5 (seção 6): revisar o bootstrap com `enable_orchestration_permissions=true`, o plano com `ENABLE_ORCHESTRATION=true` e a [estimativa](costs/orchestration.md), reler o gasto bruto e obter autorização específica. Não há autorização nova de custo implícita neste documento.
+**Ponto de parada em 22/10/2026:** fase 5 implantada e pilotada na AWS (PRs #21–#23). Quatro pilotos: sucesso ponta a ponta de 20/10/2026 (`PUBLISHED`, 7 min), repetição (`ALREADY_PUBLISHED`, sem Glue/Fargate), feriado (`SOURCE_UNAVAILABLE`) e falha controlada (`PipelineFailed.bronze`) com e-mail entregue. Evidências e achados em [orchestration-evidence.md](orchestration-evidence.md).
+
+**Próxima ação concreta:** fase 6 (seção 7): ler o custo real após o atraso de faturamento, decidir retenção (painel, alarmes, imagem, dados) e o tratamento do alarme de erros da Lambda em feriados antes de qualquer agendamento. Não há autorização nova de custo implícita neste documento.
 
 ### Leitura de 20/10/2026 (somente APIs de controle, sem custo de processamento)
 
@@ -150,7 +152,7 @@ As estimativas de computação dos lotes não são o faturamento total. O lote 1
 
 Preparar código, testes offline e estimativa antes de pedir aprovação da implantação desta fase.
 
-**Preparado em 20/10/2026, ainda não implantado:** código, Terraform, testes offline e estimativa dos itens 1–7 estão descritos em [phase-5.md](phase-5.md), com [estimativa](costs/orchestration.md) e [comandos de operação](operacao.md). Faltam os pilotos reais (item 8), que dependem do aceite da fase 4 e de aprovação de custo.
+**Implantado e pilotado em 22/10/2026:** itens 1–8 descritos em [phase-5.md](phase-5.md); pilotos e achados em [orchestration-evidence.md](orchestration-evidence.md). Não demonstrados na AWS: retomada após falha da gold e lease ocupado/expirado (cobertos pela simulação offline). O alarme de erros da Lambda dispara em feriados e precisa de ajuste antes de ativar agendamento.
 
 1. Implementar Step Functions para bronze → Glue incremental → ECS/dbt, com parâmetros de data explícitos e espera pela conclusão de cada etapa.
 2. Reusar contratos e controles existentes; não criar uma segunda implementação dos parsers. Registrar no DynamoDB etapa, referência, estado, contagens, falhas e resultado de qualidade; definir lease/concorrência e recuperação de execução interrompida.

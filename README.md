@@ -78,10 +78,10 @@ Separando o que foi **validado na AWS**, o que está **implementado e testado of
 | Bronze (Lambda, S3, DynamoDB) | ✅ Implantado; carga real e idempotência verificadas |
 | Silver (Glue, Iceberg) | ✅ Implantado; incremental, repetição e histórico 1986–2025 validados |
 | Gold (dbt: 3 dimensões, fato, 2 marts) | ✅ Implantado; piloto Fargate com 25/25 modelos e testes e reconciliação com a silver ([evidências](docs/gold-evidence.md)) |
-| Orquestração, alertas, DLQ, painel | 🧪 Implementado e simulado offline ([fase 5](docs/phase-5.md)); implantação pendente |
+| Orquestração, alertas, DLQ, painel | ✅ Implantado; pilotos de sucesso, repetição, feriado e falha com alerta entregue ([evidências](docs/orchestration-evidence.md)) |
 | Agendamento diário | ⏸️ Desligado por decisão de custo |
 
-Próximos passos: pilotos da orquestração ([USD 0,90](docs/costs/orchestration.md)) e evidências finais. O plano detalhado está em [CONTINUIDADE.md](docs/CONTINUIDADE.md).
+Próximos passos: evidências finais, custo real e decisão de retenção (fase 6). O plano detalhado está em [CONTINUIDADE.md](docs/CONTINUIDADE.md).
 
 ## Dados e semântica
 
@@ -132,7 +132,7 @@ docs/                   Evidências, decisões, custos, operação e plano de co
 - [Fundação e consumo observado](docs/foundation-validation.md) · [OIDC](docs/oidc-check.md) · [Budgets](docs/budgets-evidence.md)
 - [Primeira carga bronze](docs/bronze-data-evidence.md) · [Silver incremental e repetição](docs/silver-data-evidence.md)
 - [Histórico 2025](docs/history-2025.md) · [Lotes históricos](docs/history-batch-evidence.md) · [Histórico consolidado](docs/history-complete-evidence.md)
-- [Gold](docs/phase-4.md) · [Piloto gold](docs/gold-evidence.md) · [Orquestração](docs/phase-5.md) · [Operação](docs/operacao.md) · [Plano de conclusão](docs/CONTINUIDADE.md)
+- [Gold](docs/phase-4.md) · [Piloto gold](docs/gold-evidence.md) · [Orquestração](docs/phase-5.md) · [Pilotos da orquestração](docs/orchestration-evidence.md) · [Operação](docs/operacao.md) · [Plano de conclusão](docs/CONTINUIDADE.md)
 
 ## Licença
 
