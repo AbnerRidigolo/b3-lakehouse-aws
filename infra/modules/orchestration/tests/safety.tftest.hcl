@@ -59,6 +59,10 @@ run "disabled_schedule_and_bounded_definition" {
     condition     = aws_sqs_queue.dlq.sqs_managed_sse_enabled && aws_sqs_queue.dlq.message_retention_seconds <= 345600
     error_message = "Encrypted DLQ with short retention."
   }
+  assert {
+    condition     = length(distinct([for s in jsondecode(aws_sns_topic_policy.alerts.policy).Statement : try(s.Sid, "")])) == length(jsondecode(aws_sns_topic_policy.alerts.policy).Statement) && alltrue([for s in jsondecode(aws_sns_topic_policy.alerts.policy).Statement : try(s.Sid, "") != ""])
+    error_message = "SNS rejects topic policies without a unique Sid per statement."
+  }
 }
 run "approved_schedule_adds_missing_run_alarm" {
   command = apply
