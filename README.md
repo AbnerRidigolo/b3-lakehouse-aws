@@ -20,6 +20,10 @@ Histórico 1986–2025 conforme as [evidências do histórico](docs/history-comp
 
 ## Arquitetura
 
+![Fluxo do B3 Lakehouse: fontes oficiais, bronze no S3, silver em Iceberg, gold no Athena, orquestrado por Step Functions](docs/img/arquitetura.png)
+
+<sub>Fonte editável: [docs/img/arquitetura.html](docs/img/arquitetura.html). Abaixo, o mesmo fluxo em Mermaid.</sub>
+
 ```mermaid
 flowchart LR
   subgraph Fontes

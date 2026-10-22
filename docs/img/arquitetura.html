@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>B3 Lakehouse</title>
+<style>
+  html, body { margin: 0; background: #FBFAF7; }
+  svg { display: block; width: 1200px; height: 1200px; }
+</style>
+</head>
+<body>
+<svg viewBox="0 0 1200 1200" role="img" aria-label="Fluxo do B3 Lakehouse: fontes oficiais, Lambda grava a bronze no S3, Glue faz MERGE no Iceberg, dbt no Fargate publica a gold no Athena, orquestrado por Step Functions com lease no DynamoDB" font-family="Inter" fill="#1C1C1A">
+  <defs>
+    <marker id="data" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#2D5BD7"/>
+    </marker>
+    <marker id="ctrl" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#8A8A85"/>
+    </marker>
+  </defs>
+
+  <rect width="1200" height="1200" fill="#FBFAF7"/>
+
+  <!-- Título -->
+  <text x="80" y="100" font-family="Inter Display" font-weight="600" font-size="38">B3 Lakehouse</text>
+  <text x="80" y="136" font-size="18" fill="#6B6B66">Cotações da B3 e séries do Banco Central, da fonte oficial a tabelas analíticas na AWS</text>
+
+  <!-- Rótulos -->
+  <g font-family="JetBrains Mono" font-size="12" letter-spacing="2" fill="#8A8A85">
+    <text x="80" y="188">CONTROLE</text>
+    <text x="390" y="188">FONTE</text>
+    <text x="390" y="348">BRONZE</text>
+    <text x="390" y="548">SILVER</text>
+    <text x="390" y="748">GOLD</text>
+  </g>
+
+  <!-- Controle -->
+  <g stroke="#1C1C1A" stroke-width="1.5" fill="#FFFFFF">
+    <rect x="80" y="200" width="210" height="64" rx="4"/>
+    <rect x="80" y="360" width="210" height="464" rx="4"/>
+  </g>
+  <text x="100" y="228" font-weight="600" font-size="18">DynamoDB</text>
+  <text x="100" y="250" font-family="JetBrains Mono" font-size="13" fill="#6B6B66">lease e status</text>
+  <text x="100" y="390" font-weight="600" font-size="18">Step Functions</text>
+  <g font-family="JetBrains Mono" font-size="13" fill="#6B6B66">
+    <text x="100" y="420">uma data por vez</text>
+    <text x="100" y="442">repetição sem custo</text>
+    <text x="100" y="464">feriado explícito</text>
+    <text x="100" y="486">falha → SNS e-mail</text>
+  </g>
+
+  <g stroke="#8A8A85" stroke-width="1.5" stroke-dasharray="5 5" fill="none">
+    <line x1="185" y1="360" x2="185" y2="272" marker-end="url(#ctrl)"/>
+    <line x1="290" y1="392" x2="382" y2="392" marker-end="url(#ctrl)"/>
+    <line x1="290" y1="592" x2="382" y2="592" marker-end="url(#ctrl)"/>
+    <line x1="290" y1="792" x2="382" y2="792" marker-end="url(#ctrl)"/>
+  </g>
+  <g font-family="JetBrains Mono" font-size="13" fill="#8A8A85" text-anchor="middle">
+    <text x="197" y="320" text-anchor="start">lease</text>
+    <text x="338" y="380">1 · invoke</text>
+    <text x="338" y="580">2 · .sync</text>
+    <text x="338" y="780">3 · .sync</text>
+  </g>
+
+  <!-- Nós -->
+  <rect x="390" y="200" width="290" height="64" rx="4" fill="none" stroke="#1C1C1A" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <g stroke="#1C1C1A" stroke-width="1.5" fill="#FFFFFF">
+    <rect x="390" y="360" width="290" height="64" rx="4"/>
+    <rect x="810" y="360" width="310" height="64" rx="4"/>
+    <rect x="390" y="560" width="290" height="64" rx="4"/>
+    <rect x="810" y="560" width="310" height="64" rx="4"/>
+    <rect x="390" y="760" width="290" height="64" rx="4"/>
+    <rect x="810" y="760" width="310" height="64" rx="4"/>
+  </g>
+  <g font-weight="600" font-size="18">
+    <text x="410" y="228">B3 · Banco Central</text>
+    <text x="410" y="388">AWS Lambda</text>
+    <text x="830" y="388">Amazon S3</text>
+    <text x="410" y="588">AWS Glue · PySpark</text>
+    <text x="830" y="588">Apache Iceberg v2</text>
+    <text x="410" y="788">dbt · ECS Fargate</text>
+    <text x="830" y="788">Amazon Athena</text>
+  </g>
+  <g font-family="JetBrains Mono" font-size="13" fill="#6B6B66">
+    <text x="410" y="250">COTAHIST · SGS</text>
+    <text x="410" y="410">valida em memória</text>
+    <text x="830" y="410">raw imutável</text>
+    <text x="410" y="610">idempotente</text>
+    <text x="830" y="610">Glue Data Catalog</text>
+    <text x="410" y="810">sem NAT</text>
+    <text x="830" y="810">dims · fato · marts</text>
+  </g>
+
+  <!-- Fluxo de dados -->
+  <g stroke="#2D5BD7" stroke-width="2" fill="none">
+    <line x1="535" y1="264" x2="535" y2="352" marker-end="url(#data)"/>
+    <line x1="680" y1="392" x2="802" y2="392" marker-end="url(#data)"/>
+    <polyline points="965,424 965,492 535,492 535,552" marker-end="url(#data)"/>
+    <line x1="680" y1="592" x2="802" y2="592" marker-end="url(#data)"/>
+    <polyline points="965,624 965,692 535,692 535,752" marker-end="url(#data)"/>
+    <line x1="680" y1="792" x2="802" y2="792" marker-end="url(#data)"/>
+  </g>
+  <g font-family="JetBrains Mono" font-size="13" fill="#2D5BD7" text-anchor="middle">
+    <text x="547" y="314" text-anchor="start">download diário</text>
+    <text x="745" y="364">grava</text>
+    <text x="750" y="482">lê e confere SHA-256</text>
+    <text x="745" y="564">MERGE</text>
+    <text x="750" y="682">testa os contratos</text>
+    <text x="745" y="764">CTAS</text>
+  </g>
+  <g font-family="JetBrains Mono" font-size="13" fill="#2D5BD7" text-anchor="middle">
+    <text x="745" y="382">imutável</text>
+    <text x="745" y="582">+ read-back</text>
+    <text x="745" y="782">25 testes</text>
+  </g>
+
+  <!-- Rodapé -->
+  <line x1="80" y1="900" x2="1120" y2="900" stroke="#DDDCD6" stroke-width="1"/>
+  <text x="80" y="952" font-size="24">3,18 milhões de cotações · 1986–2025</text>
+  <text x="80" y="988" font-size="24">um pregão novo em 7 minutos, ponta a ponta</text>
+  <g font-family="JetBrains Mono" font-size="15" fill="#6B6B66">
+    <text x="80" y="1040">Terraform · GitHub Actions com OIDC</text>
+    <text x="80" y="1066">plano revisado antes de cada apply · teto total de USD 10</text>
+  </g>
+  <g font-family="JetBrains Mono" font-size="13" fill="#6B6B66">
+    <line x1="80" y1="1115" x2="116" y2="1115" stroke="#2D5BD7" stroke-width="2"/>
+    <text x="126" y="1120">dados</text>
+    <line x1="200" y1="1115" x2="236" y2="1115" stroke="#8A8A85" stroke-width="1.5" stroke-dasharray="5 5"/>
+    <text x="246" y="1120">controle</text>
+  </g>
+</svg>
+</body>
+</html>
