@@ -99,10 +99,11 @@ resource "aws_cloudwatch_event_target" "failed" {
 }
 resource "aws_sns_topic_policy" "alerts" {
   arn = aws_sns_topic.alerts.arn
+  # SNS rejects topic policies whose statements lack unique Sids.
   policy = jsonencode({ Version = "2012-10-17", Statement = [
-    { Effect = "Allow", Principal = { Service = "events.amazonaws.com" }, Action = "sns:Publish", Resource = aws_sns_topic.alerts.arn,
+    { Sid = "PipelineFailureEvents", Effect = "Allow", Principal = { Service = "events.amazonaws.com" }, Action = "sns:Publish", Resource = aws_sns_topic.alerts.arn,
     Condition = { ArnEquals = { "aws:SourceArn" = aws_cloudwatch_event_rule.failed.arn } } },
-    { Effect = "Allow", Principal = { Service = "cloudwatch.amazonaws.com" }, Action = "sns:Publish", Resource = aws_sns_topic.alerts.arn,
+    { Sid = "PipelineAlarms", Effect = "Allow", Principal = { Service = "cloudwatch.amazonaws.com" }, Action = "sns:Publish", Resource = aws_sns_topic.alerts.arn,
     Condition = { ArnLike = { "aws:SourceArn" = "arn:aws:cloudwatch:${var.region}:${var.account_id}:alarm:b3-lakehouse-aws-*" } } }
   ] })
 }
