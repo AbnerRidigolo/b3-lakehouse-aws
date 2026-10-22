@@ -167,13 +167,15 @@ Aceite: execução ponta a ponta comprovada; repetição sem duplicação; falha
 
 ## 7. Fase 6 — evidências e encerramento
 
-- [ ] Diagrama final corresponde aos recursos realmente implantados, incluindo a decisão Glue/EMR e Step Functions/MWAA.
+- [x] Diagrama final corresponde aos recursos realmente implantados, incluindo a decisão Glue/EMR e Step Functions/MWAA.
 - [ ] Prints sem segredos e links de execuções, consultas e verificações de qualidade disponíveis.
 - [ ] Custo real por serviço e tag Project, com período, data de atualização e limitações de atribuição. Separar consumo bruto, créditos e estimativas; nunca apresentar estimativa como fatura.
-- [ ] Instruções para executar uma data, reprocessar falha, interpretar quarentena/lacunas, consultar gold e interromper operação.
-- [ ] Decisão explícita sobre retenção e scheduler. Alertas de orçamento não garantem teto de USD 10; recorrência precisa de horizonte e mecanismo de parada revisados.
-- [ ] Plano de encerramento revisável: parar tarefas/agendamento, decidir retenção dos dados/imagens, limpar recursos autorizados e preservar estado/evidências. Não usar force_destroy para contornar proteção de dados.
-- [ ] README sem alegações de ajuste por eventos corporativos, atualização diária ativa ou custo final ainda não demonstradas.
+- [x] Instruções para executar uma data, reprocessar falha, interpretar quarentena/lacunas, consultar gold e interromper operação.
+- [x] Decisão explícita sobre retenção e scheduler (22/10/2026: scheduler desligado; recursos mantidos até a expiração do plano FREE em 02/12/2026). Alertas de orçamento não garantem teto de USD 10; recorrência precisa de horizonte e mecanismo de parada revisados.
+- [x] Plano de encerramento revisável: parar tarefas/agendamento, decidir retenção dos dados/imagens, limpar recursos autorizados e preservar estado/evidências. Não usar force_destroy para contornar proteção de dados.
+- [x] README sem alegações de ajuste por eventos corporativos, atualização diária ativa ou custo final ainda não demonstradas.
+
+Estado em 22/10/2026: diagrama, instruções ([operacao.md](operacao.md)), plano de encerramento ([encerramento.md](encerramento.md)) e README revisados. Decisão do proprietário: scheduler desligado e conta mantida até expirar em 02/12/2026. Pendentes: prints e custo real após o faturamento — antes dessa data.
 
 Redshift é opcional, desligado e fora do caminho crítico. Só iniciar com pedido e estimativa próprios.
 

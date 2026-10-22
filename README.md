@@ -8,14 +8,15 @@ Lakehouse de dados de mercado brasileiro na AWS: **40 anos de cotações da B3 (
 
 | | |
 | --- | --- |
-| **3.185.477** | cotações na camada silver (lote padrão, mercado à vista) |
-| **29.917** | observações diárias de CDI, Selic e dólar |
+| **3.185.802** | cotações na camada silver (lote padrão, mercado à vista) |
+| **29.920** | observações diárias de CDI, Selic e dólar |
 | **40 anos** | de histórico, do cruzeiro ao real, sem converter valores antigos |
 | **374** | linhas inválidas isoladas em quarentena, sem descartar anos inteiros |
+| **7 min** | de uma data nova ponta a ponta: bronze → Glue → dbt no Fargate, com 25 testes |
 | **0** | chaves AWS estáticas: CI só com OIDC e ambientes protegidos |
 | **USD 10** | teto total do projeto, com USD 2 de reserva e aprovação de custo por etapa |
 
-Contagens das [evidências do histórico](docs/history-complete-evidence.md), registradas na conclusão das cargas.
+Histórico 1986–2025 conforme as [evidências do histórico](docs/history-complete-evidence.md), mais os pregões de 01/10/2026 e 20/10/2026 ([piloto da orquestração](docs/orchestration-evidence.md)); 2026 não está completo.
 
 ## Arquitetura
 
@@ -38,7 +39,8 @@ flowchart LR
     ATH[(Athena<br/>dims · fato · marts)]
   end
   DDB[(DynamoDB<br/>leases e status)]
-  SF{{Step Functions}}
+  SCH[EventBridge Scheduler<br/>DISABLED] -.-> SF
+  SF{{Step Functions<br/>execução manual}}
   B3 --> L
   BCB --> L
   L --> S3B --> G --> ICE --> F --> ATH
@@ -47,7 +49,7 @@ flowchart LR
   SF -.orquestra.-> L
   SF -.-> G
   SF -.-> F
-  SF -.falha.-> SNS[EventBridge → SNS / SQS DLQ]
+  SF -.falha.-> SNS[EventBridge → SNS e-mail<br/>SQS DLQ · alarmes · painel]
 ```
 
 | Camada | Implementação | Garantias |
@@ -55,7 +57,7 @@ flowchart LR
 | Bronze | Lambda Python → S3 | ZIP nunca extraído em disco, limites de tamanho, header/trailer conferidos, objetos imutáveis, reexecução idempotente |
 | Silver | Glue PySpark → Iceberg v2 | Hash da bronze conferido, MERGE por `(data, ticker)`, read-back com `exceptAll` nos dois sentidos antes de marcar SUCCESS |
 | Gold | dbt-Athena em Fargate | Contratos da silver testados antes de escrever (falha fechada), `dbt build --fail-fast`, prazo de 20 min |
-| Orquestração | Step Functions + Scheduler | Lease global, retomada sem repagar etapas, feriado explícito, alertas e DLQ |
+| Orquestração | Step Functions (Scheduler desligado) | Lease global, repetição sem custo, feriado explícito, alerta por e-mail e DLQ; retomada após falha validada só offline |
 | Plataforma | Terraform + GitHub Actions | Plan em PR, apply do plano exato e criptografado com aprovação, permission boundaries por componente |
 
 ## Decisões de engenharia
@@ -81,7 +83,7 @@ Separando o que foi **validado na AWS**, o que está **implementado e testado of
 | Orquestração, alertas, DLQ, painel | ✅ Implantado; pilotos de sucesso, repetição, feriado e falha com alerta entregue ([evidências](docs/orchestration-evidence.md)) |
 | Agendamento diário | ⏸️ Desligado por decisão de custo |
 
-Próximos passos: evidências finais, custo real e decisão de retenção (fase 6). O plano detalhado está em [CONTINUIDADE.md](docs/CONTINUIDADE.md).
+Próximos passos: custo real após o faturamento, prints e decisão de retenção antes da expiração do plano FREE em 02/12/2026 ([encerramento](docs/encerramento.md)). O plano detalhado está em [CONTINUIDADE.md](docs/CONTINUIDADE.md).
 
 ## Dados e semântica
 
@@ -132,7 +134,7 @@ docs/                   Evidências, decisões, custos, operação e plano de co
 - [Fundação e consumo observado](docs/foundation-validation.md) · [OIDC](docs/oidc-check.md) · [Budgets](docs/budgets-evidence.md)
 - [Primeira carga bronze](docs/bronze-data-evidence.md) · [Silver incremental e repetição](docs/silver-data-evidence.md)
 - [Histórico 2025](docs/history-2025.md) · [Lotes históricos](docs/history-batch-evidence.md) · [Histórico consolidado](docs/history-complete-evidence.md)
-- [Gold](docs/phase-4.md) · [Piloto gold](docs/gold-evidence.md) · [Orquestração](docs/phase-5.md) · [Pilotos da orquestração](docs/orchestration-evidence.md) · [Operação](docs/operacao.md) · [Plano de conclusão](docs/CONTINUIDADE.md)
+- [Gold](docs/phase-4.md) · [Piloto gold](docs/gold-evidence.md) · [Orquestração](docs/phase-5.md) · [Pilotos da orquestração](docs/orchestration-evidence.md) · [Operação](docs/operacao.md) · [Encerramento](docs/encerramento.md) · [Plano de conclusão](docs/CONTINUIDADE.md)
 
 ## Licença
 
