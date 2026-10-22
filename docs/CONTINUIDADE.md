@@ -167,13 +167,15 @@ Aceite: execução ponta a ponta comprovada; repetição sem duplicação; falha
 
 ## 7. Fase 6 — evidências e encerramento
 
-- [ ] Diagrama final corresponde aos recursos realmente implantados, incluindo a decisão Glue/EMR e Step Functions/MWAA.
+- [x] Diagrama final corresponde aos recursos realmente implantados, incluindo a decisão Glue/EMR e Step Functions/MWAA.
 - [ ] Prints sem segredos e links de execuções, consultas e verificações de qualidade disponíveis.
 - [ ] Custo real por serviço e tag Project, com período, data de atualização e limitações de atribuição. Separar consumo bruto, créditos e estimativas; nunca apresentar estimativa como fatura.
-- [ ] Instruções para executar uma data, reprocessar falha, interpretar quarentena/lacunas, consultar gold e interromper operação.
+- [x] Instruções para executar uma data, reprocessar falha, interpretar quarentena/lacunas, consultar gold e interromper operação.
 - [ ] Decisão explícita sobre retenção e scheduler. Alertas de orçamento não garantem teto de USD 10; recorrência precisa de horizonte e mecanismo de parada revisados.
-- [ ] Plano de encerramento revisável: parar tarefas/agendamento, decidir retenção dos dados/imagens, limpar recursos autorizados e preservar estado/evidências. Não usar force_destroy para contornar proteção de dados.
-- [ ] README sem alegações de ajuste por eventos corporativos, atualização diária ativa ou custo final ainda não demonstradas.
+- [x] Plano de encerramento revisável: parar tarefas/agendamento, decidir retenção dos dados/imagens, limpar recursos autorizados e preservar estado/evidências. Não usar force_destroy para contornar proteção de dados.
+- [x] README sem alegações de ajuste por eventos corporativos, atualização diária ativa ou custo final ainda não demonstradas.
+
+Estado em 22/10/2026: diagrama, instruções ([operacao.md](operacao.md)), plano de encerramento ([encerramento.md](encerramento.md)) e README revisados. Pendentes: prints, custo real após o faturamento e decisão de retenção/scheduler do proprietário — tudo antes da expiração do plano FREE em 02/12/2026.
 
 Redshift é opcional, desligado e fora do caminho crítico. Só iniciar com pedido e estimativa próprios.
 
