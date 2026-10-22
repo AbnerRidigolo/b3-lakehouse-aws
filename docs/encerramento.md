@@ -20,6 +20,8 @@ Budget da conta (sem créditos) em 21/10 12:16 UTC: USD 2,725 de USD 10; previs�
 
 ## Decisões do proprietário
 
+**Decidido em 22/10/2026:** agendamento **desligado** e conta mantida como está até **expirar em 02/12/2026**, sem desligamento antecipado. Até lá, concluir prints, post e a leitura do custo final.
+
 1. **Agendamento:** manter desligado (recomendado). Ligar custa ~USD 0,15–0,30 por dia útil e, antes disso, o alarme de erros da Lambda precisa parar de disparar em feriados ([achado](orchestration-evidence.md#achados)). Qualquer ativação exige horizonte, estimativa e data de desligamento.
 2. **Retenção até a publicação:** manter tudo implantado até concluir prints e post (custo estimado < USD 0,10/mês).
 3. **Depois da publicação:** (a) deixar a conta expirar em 02/12/2026, ou (b) desligar antes pela sequência abaixo. Em ambos os casos os dados na AWS deixam de existir; o repositório guarda código e evidências.
