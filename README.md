@@ -1,6 +1,6 @@
 # B3 Lakehouse AWS
 
-Lakehouse de dados de mercado brasileiro na AWS: **40 anos de cotações da B3 (1986–2025)** e séries do Banco Central (CDI, Selic e dólar), da fonte oficial até tabelas analíticas, com ingestão serverless, Spark, Apache Iceberg, dbt e infraestrutura como código — tudo dentro de um **teto total de USD 10**.
+Lakehouse de dados de mercado brasileiro na AWS: **40 anos de cotações da B3 (1986–2025)** e séries do Banco Central (CDI, Selic e dólar), da fonte oficial até tabelas analíticas, com ingestão serverless, Spark, Apache Iceberg, dbt e infraestrutura como código — com um **teto planejado de USD 10**.
 
 ![Python](https://img.shields.io/badge/Python-3.11-3776AB) ![Spark](https://img.shields.io/badge/AWS%20Glue-PySpark-E25A1C) ![Iceberg](https://img.shields.io/badge/Apache%20Iceberg-v2-1F8FFF) ![dbt](https://img.shields.io/badge/dbt-Athena-FF694B) ![Terraform](https://img.shields.io/badge/Terraform-1.16-7B42BC) ![CI](https://img.shields.io/badge/GitHub%20Actions-OIDC-2088FF)
 
@@ -14,9 +14,25 @@ Lakehouse de dados de mercado brasileiro na AWS: **40 anos de cotações da B3 (
 | **374** | linhas inválidas isoladas em quarentena, sem descartar anos inteiros |
 | **7 min** | de uma data nova ponta a ponta: bronze → Glue → dbt no Fargate, com 25 testes |
 | **0** | chaves AWS estáticas: CI só com OIDC e ambientes protegidos |
-| **USD 10** | teto total do projeto, com USD 2 de reserva e aprovação de custo por etapa |
+| **USD 10** | teto planejado, com USD 2 de reserva e aprovação de custo por etapa |
 
 Histórico 1986–2025 conforme as [evidências do histórico](docs/history-complete-evidence.md), mais os pregões de 01/10/2026 e 20/10/2026 ([piloto da orquestração](docs/orchestration-evidence.md)); 2026 não está completo.
+
+### Consulta e evidência no Athena
+
+O primeiro piloto da camada Gold, em 21/10/2026, executou esta consulta no workgroup do projeto:
+
+```sql
+select count(*) as quotes from b3_lakehouse_gold.fct_daily_quotes;
+```
+
+| quotes |
+| ---: |
+| 3.185.477 |
+
+Esse era o total do primeiro piloto. O piloto seguinte incorporou mais 325 cotações, chegando a **3.185.802** linhas em `mart_daily`, com 25 verificações do `dbt build` aprovadas. Veja o [piloto da camada Gold](docs/gold-evidence.md#consultas-de-aceite), o [piloto da orquestração](docs/orchestration-evidence.md) e as [consultas de exemplo](docs/gold-queries.sql).
+
+**Custo registrado:** a leitura do AWS Budgets antes dos pilotos mostrava USD 2,725 para a conta, dos quais USD 1,633 estavam atribuídos à tag do projeto. Esses valores são parciais. O total faturado após os pilotos ainda não está registrado nas [evidências de encerramento](docs/encerramento.md).
 
 ## Arquitetura
 
